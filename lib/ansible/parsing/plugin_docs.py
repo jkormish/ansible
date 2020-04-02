@@ -46,7 +46,8 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
                         theid = t.id
                     except AttributeError:
                         # skip errors can happen when trying to use the normal code
-                        display.warning("Failed to assign id for %s on %s, skipping" % (t, filename))
+                        display.warning(
+                            "Failed to assign id for %s on %s, skipping" % (t, filename))
                         continue
 
                     if theid in string_to_vars:
@@ -56,7 +57,8 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
                         else:
                             if theid == 'DOCUMENTATION':
                                 # string should be yaml
-                                data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
+                                data[varkey] = AnsibleLoader(
+                                    child.value.s, file_name=filename).get_single_data()
                             else:
                                 # not yaml, should be a simple string
                                 data[varkey] = to_text(child.value.s)
@@ -109,13 +111,15 @@ def read_docstub(filename):
                     capturing = True
                     # Detect that the short_description continues on the next line if it's indented more
                     # than short_description itself.
-                    indent_detection = ' ' * (len(line) - len(line.lstrip()) + 1)
+                    indent_detection = ' ' * \
+                        (len(line) - len(line.lstrip()) + 1)
                     doc_stub.append(line)
 
             elif line.startswith('DOCUMENTATION') and '=' in line:
                 in_documentation = True
 
     short_description = r''.join(doc_stub).strip().rstrip('.')
-    data = AnsibleLoader(short_description, file_name=filename).get_single_data()
+    data = AnsibleLoader(
+        short_description, file_name=filename).get_single_data()
 
     return data

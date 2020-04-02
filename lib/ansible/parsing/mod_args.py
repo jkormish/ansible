@@ -106,7 +106,8 @@ class ModuleArgsParser:
         task_ds = {} if task_ds is None else task_ds
 
         if not isinstance(task_ds, dict):
-            raise AnsibleAssertionError("the type of 'task_ds' should be a dict, but is a %s" % type(task_ds))
+            raise AnsibleAssertionError(
+                "the type of 'task_ds' should be a dict, but is a %s" % type(task_ds))
         self._task_ds = task_ds
         self._collection_list = collection_list
         # delayed local imports to prevent circular import
@@ -155,7 +156,8 @@ class ModuleArgsParser:
             elif isinstance(additional_args, dict):
                 final_args.update(additional_args)
             else:
-                raise AnsibleParserError('Complex args must be a dictionary or variable string ("{{var}}").')
+                raise AnsibleParserError(
+                    'Complex args must be a dictionary or variable string ("{{var}}").')
 
         # how we normalize depends if we figured out what the module name is
         # yet.  If we have already figured it out, it's a 'new style' invocation.
@@ -179,7 +181,8 @@ class ModuleArgsParser:
             for arg in args:
                 arg = to_text(arg)
                 if arg.startswith('_ansible_'):
-                    raise AnsibleError("invalid parameter specified for action '%s': '%s'" % (action, arg))
+                    raise AnsibleError(
+                        "invalid parameter specified for action '%s': '%s'" % (action, arg))
 
         # finally, update the args we're going to return with the ones
         # which were normalized above
@@ -212,7 +215,8 @@ class ModuleArgsParser:
             # this can happen with modules which take no params, like ping:
             args = None
         else:
-            raise AnsibleParserError("unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
+            raise AnsibleParserError(
+                "unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
         return args
 
     def _normalize_old_style_args(self, thing):
@@ -235,7 +239,8 @@ class ModuleArgsParser:
             # form is like:  action: { module: 'copy', src: 'a', dest: 'b' }
             thing = thing.copy()
             if 'module' in thing:
-                action, module_args = self._split_module_string(thing['module'])
+                action, module_args = self._split_module_string(
+                    thing['module'])
                 args = thing.copy()
                 check_raw = action in FREEFORM_ACTIONS
                 args.update(parse_kv(module_args, check_raw=check_raw))
@@ -249,7 +254,8 @@ class ModuleArgsParser:
 
         else:
             # need a dict or a string, so giving up
-            raise AnsibleParserError("unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
+            raise AnsibleParserError(
+                "unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
 
         return (action, args)
 
@@ -276,21 +282,25 @@ class ModuleArgsParser:
         if 'action' in self._task_ds:
             # an old school 'action' statement
             thing = self._task_ds['action']
-            action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
+            action, args = self._normalize_parameters(
+                thing, action=action, additional_args=additional_args)
 
         # local_action
         if 'local_action' in self._task_ds:
             # local_action is similar but also implies a delegate_to
             if action is not None:
-                raise AnsibleParserError("action and local_action are mutually exclusive", obj=self._task_ds)
+                raise AnsibleParserError(
+                    "action and local_action are mutually exclusive", obj=self._task_ds)
             thing = self._task_ds.get('local_action', '')
             delegate_to = 'localhost'
-            action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
+            action, args = self._normalize_parameters(
+                thing, action=action, additional_args=additional_args)
 
         # module: <stuff> is the more new-style invocation
 
         # filter out task attributes so we're only querying unrecognized keys as actions/modules
-        non_task_ds = dict((k, v) for k, v in iteritems(self._task_ds) if (k not in self._task_attrs) and (not k.startswith('with_')))
+        non_task_ds = dict((k, v) for k, v in iteritems(self._task_ds) if (
+            k not in self._task_attrs) and (not k.startswith('with_')))
 
         # walk the filtered input dictionary to see if we recognize a module name
         for item, value in iteritems(non_task_ds):
@@ -298,17 +308,20 @@ class ModuleArgsParser:
                     module_loader.has_plugin(item, collection_list=self._collection_list):
                 # finding more than one module name is a problem
                 if action is not None:
-                    raise AnsibleParserError("conflicting action statements: %s, %s" % (action, item), obj=self._task_ds)
+                    raise AnsibleParserError("conflicting action statements: %s, %s" % (
+                        action, item), obj=self._task_ds)
                 action = item
                 thing = value
-                action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
+                action, args = self._normalize_parameters(
+                    thing, action=action, additional_args=additional_args)
 
         # if we didn't see any module in the task at all, it's not a task really
         if action is None:
             if non_task_ds:  # there was one non-task action, but we couldn't find it
                 bad_action = list(non_task_ds.keys())[0]
                 raise AnsibleParserError("couldn't resolve module/action '{0}'. This often indicates a "
-                                         "misspelling, missing collection, or incorrect module path.".format(bad_action),
+                                         "misspelling, missing collection, or incorrect module path.".format(
+                                             bad_action),
                                          obj=self._task_ds)
             else:
                 raise AnsibleParserError("no module/action detected in task.",

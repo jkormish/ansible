@@ -47,7 +47,6 @@ RETURN = """
 """
 
 
-
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
         ret = []

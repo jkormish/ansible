@@ -16,7 +16,6 @@ ANSIBLE_METADATA = {
 }
 
 
-
 def split_url(value, query='', alias='urlsplit'):
 
     results = helpers.object_to_dict(urlsplit(value), exclude=[

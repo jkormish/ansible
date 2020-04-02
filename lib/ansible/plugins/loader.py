@@ -50,7 +50,8 @@ def add_all_plugin_dirs(path):
                 if os.path.isdir(plugin_path):
                     obj.add_directory(to_text(plugin_path))
     else:
-        display.warning("Ignoring invalid path provided to plugin path: '%s' is not a directory" % to_text(path))
+        display.warning(
+            "Ignoring invalid path provided to plugin path: '%s' is not a directory" % to_text(path))
 
 
 def get_shell_plugin(shell_type=None, executable=None):
@@ -74,11 +75,13 @@ def get_shell_plugin(shell_type=None, executable=None):
                             shell_type = shell.SHELL_FAMILY
                             break
         else:
-            raise AnsibleError("Either a shell type or a shell executable must be provided ")
+            raise AnsibleError(
+                "Either a shell type or a shell executable must be provided ")
 
     shell = shell_loader.get(shell_type)
     if not shell:
-        raise AnsibleError("Could not find the shell plugin required (%s)." % shell_type)
+        raise AnsibleError(
+            "Could not find the shell plugin required (%s)." % shell_type)
 
     if executable:
         setattr(shell, 'executable', executable)
@@ -242,7 +245,8 @@ class PluginLoader:
             for path in self.config:
                 path = os.path.realpath(os.path.expanduser(path))
                 if subdirs:
-                    contents = glob.glob("%s/*" % path) + glob.glob("%s/*/*" % path)
+                    contents = glob.glob("%s/*" % path) + \
+                        glob.glob("%s/*/*" % path)
                     for c in contents:
                         if os.path.isdir(c) and c not in ret:
                             ret.append(c)
@@ -285,13 +289,17 @@ class PluginLoader:
 
             # if type name != 'module_doc_fragment':
             if type_name in C.CONFIGURABLE_PLUGINS:
-                dstring = AnsibleLoader(getattr(module, 'DOCUMENTATION', ''), file_name=path).get_single_data()
+                dstring = AnsibleLoader(
+                    getattr(module, 'DOCUMENTATION', ''), file_name=path).get_single_data()
                 if dstring:
-                    add_fragments(dstring, path, fragment_loader=fragment_loader)
+                    add_fragments(
+                        dstring, path, fragment_loader=fragment_loader)
 
                 if dstring and 'options' in dstring and isinstance(dstring['options'], dict):
-                    C.config.initialize_plugin_configuration_definitions(type_name, name, dstring['options'])
-                    display.debug('Loaded config def from plugin (%s/%s)' % (type_name, name))
+                    C.config.initialize_plugin_configuration_definitions(
+                        type_name, name, dstring['options'])
+                    display.debug(
+                        'Loaded config def from plugin (%s/%s)' % (type_name, name))
 
     def add_directory(self, directory, with_subdir=False):
         ''' Adds an additional directory to the search path '''
@@ -312,7 +320,8 @@ class PluginLoader:
         meaning plugins inside roles inside collections will be ignored.
         """
 
-        plugin_type = AnsibleCollectionRef.legacy_plugin_dir_to_plugin_type(self.subdir)
+        plugin_type = AnsibleCollectionRef.legacy_plugin_dir_to_plugin_type(
+            self.subdir)
 
         acr = AnsibleCollectionRef.from_fqcr(fq_name, plugin_type)
 
@@ -348,7 +357,8 @@ class PluginLoader:
 
         # look for any matching extension in the package location (sans filter)
         ext_blacklist = ['.pyc', '.pyo']
-        found_files = [f for f in glob.iglob(os.path.join(pkg_path, n_resource) + '.*') if os.path.isfile(f) and os.path.splitext(f)[1] not in ext_blacklist]
+        found_files = [f for f in glob.iglob(os.path.join(
+            pkg_path, n_resource) + '.*') if os.path.isfile(f) and os.path.splitext(f)[1] not in ext_blacklist]
 
         if not found_files:
             return None, None
@@ -385,7 +395,8 @@ class PluginLoader:
             if '.' in name or not collection_list:
                 candidates = [name]
             else:
-                candidates = ['{0}.{1}'.format(c, name) for c in collection_list]
+                candidates = ['{0}.{1}'.format(c, name)
+                              for c in collection_list]
             # TODO: keep actual errors, not just assembled messages
             errors = []
             for candidate_name in candidates:
@@ -395,17 +406,20 @@ class PluginLoader:
                         # 'ansible.legacy' refers to the plugin finding behavior used before collections existed.
                         # They need to search 'library' and the various '*_plugins' directories in order to find the file.
                         full_name = name
-                        p = self._find_plugin_legacy(name.replace('ansible.legacy.', '', 1), ignore_deprecated, check_aliases, suffix)
+                        p = self._find_plugin_legacy(name.replace(
+                            'ansible.legacy.', '', 1), ignore_deprecated, check_aliases, suffix)
                     else:
                         # 'ansible.builtin' should be handled here. This means only internal, or builtin, paths are searched.
-                        full_name, p = self._find_fq_plugin(candidate_name, suffix)
+                        full_name, p = self._find_fq_plugin(
+                            candidate_name, suffix)
                     if p:
                         return full_name, p
                 except Exception as ex:
                     errors.append(to_native(ex))
 
             if errors:
-                display.debug(msg='plugin lookup for {0} failed; errors: {1}'.format(name, '; '.join(errors)))
+                display.debug(msg='plugin lookup for {0} failed; errors: {1}'.format(
+                    name, '; '.join(errors)))
 
             return None, None
 
@@ -441,7 +455,8 @@ class PluginLoader:
             try:
                 full_paths = (os.path.join(path, f) for f in os.listdir(path))
             except OSError as e:
-                display.warning("Error accessing plugin paths: %s" % to_text(e))
+                display.warning(
+                    "Error accessing plugin paths: %s" % to_text(e))
 
             for full_path in (f for f in full_paths if os.path.isfile(f) and not f.endswith('__init__.py')):
                 full_name = os.path.basename(full_path)
@@ -520,14 +535,16 @@ class PluginLoader:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             if imp is None:
-                spec = importlib.util.spec_from_file_location(to_native(full_name), to_native(path))
+                spec = importlib.util.spec_from_file_location(
+                    to_native(full_name), to_native(path))
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
                 sys.modules[full_name] = module
             else:
                 with open(to_bytes(path), 'rb') as module_file:
                     # to_native is used here because imp.load_source's path is for tracebacks and python's traceback formatting uses native strings
-                    module = imp.load_source(to_native(full_name), to_native(path), module_file)
+                    module = imp.load_source(
+                        to_native(full_name), to_native(path), module_file)
         return module
 
     def _update_object(self, obj, name, path):
@@ -544,7 +561,8 @@ class PluginLoader:
         collection_list = kwargs.pop('collection_list', None)
         if name in self.aliases:
             name = self.aliases[name]
-        name, path = self.find_plugin_with_name(name, collection_list=collection_list)
+        name, path = self.find_plugin_with_name(
+            name, collection_list=collection_list)
         if path is None:
             return None
 
@@ -566,7 +584,8 @@ class PluginLoader:
             if not issubclass(obj, plugin_class):
                 return None
 
-        self._display_plugin_load(self.class_name, name, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
+        self._display_plugin_load(self.class_name, name, self._searched_paths,
+                                  path, found_in_cache=found_in_cache, class_only=class_only)
 
         if not class_only:
             try:
@@ -589,13 +608,16 @@ class PluginLoader:
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
         ''' formats data to display debug info for plugin loading, also avoids processing unless really needed '''
         if C.DEFAULT_DEBUG:
-            msg = 'Loading %s \'%s\' from %s' % (class_name, os.path.basename(name), path)
+            msg = 'Loading %s \'%s\' from %s' % (
+                class_name, os.path.basename(name), path)
 
             if len(searched_paths) > 1:
-                msg = '%s (searched paths: %s)' % (msg, self.format_paths(searched_paths))
+                msg = '%s (searched paths: %s)' % (
+                    msg, self.format_paths(searched_paths))
 
             if found_in_cache or class_only:
-                msg = '%s (found_in_cache=%s, class_only=%s)' % (msg, found_in_cache, class_only)
+                msg = '%s (found_in_cache=%s, class_only=%s)' % (
+                    msg, found_in_cache, class_only)
 
             display.debug(msg)
 
@@ -640,7 +662,8 @@ class PluginLoader:
         class_only = kwargs.pop('class_only', False)
         # Having both path_only and class_only is a coding bug
         if path_only and class_only:
-            raise AnsibleError('Do not set both path_only and class_only when calling PluginLoader.all()')
+            raise AnsibleError(
+                'Do not set both path_only and class_only when calling PluginLoader.all()')
 
         all_matches = []
         found_in_cache = True
@@ -675,7 +698,8 @@ class PluginLoader:
                     module = self._load_module_source(full_name, path)
                     self._load_config_defs(basename, module, path)
                 except Exception as e:
-                    display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
+                    display.warning(
+                        "Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
                     continue
                 self._module_cache[path] = module
                 found_in_cache = False
@@ -683,7 +707,8 @@ class PluginLoader:
             try:
                 obj = getattr(self._module_cache[path], self.class_name)
             except AttributeError as e:
-                display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
+                display.warning(
+                    "Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
                 continue
 
             if self.base_class:
@@ -698,13 +723,15 @@ class PluginLoader:
                 if not issubclass(obj, plugin_class):
                     continue
 
-            self._display_plugin_load(self.class_name, basename, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
+            self._display_plugin_load(self.class_name, basename, self._searched_paths,
+                                      path, found_in_cache=found_in_cache, class_only=class_only)
 
             if not class_only:
                 try:
                     obj = obj(*args, **kwargs)
                 except TypeError as e:
-                    display.warning("Skipping plugin (%s) as it seems to be incomplete: %s" % (path, to_text(e)))
+                    display.warning(
+                        "Skipping plugin (%s) as it seems to be incomplete: %s" % (path, to_text(e)))
 
             self._update_object(obj, basename, path)
             yield obj
@@ -717,13 +744,15 @@ class Jinja2Loader(PluginLoader):
     The filter and test plugins are Jinja2 plugins encapsulated inside of our plugin format.
     The way the calling code is setup, we need to do a few things differently in the all() method
     """
+
     def find_plugin(self, name, collection_list=None):
         # Nothing using Jinja2Loader use this method.  We can't use the base class version because
         # we deduplicate differently than the base class
         if '.' in name:
             return super(Jinja2Loader, self).find_plugin(name, collection_list=collection_list)
 
-        raise AnsibleError('No code should call find_plugin for Jinja2Loaders (Not implemented)')
+        raise AnsibleError(
+            'No code should call find_plugin for Jinja2Loaders (Not implemented)')
 
     def get(self, name, *args, **kwargs):
         # Nothing using Jinja2Loader use this method.  We can't use the base class version because
@@ -731,7 +760,8 @@ class Jinja2Loader(PluginLoader):
         if '.' in name:
             return super(Jinja2Loader, self).get(name, *args, **kwargs)
 
-        raise AnsibleError('No code should call find_plugin for Jinja2Loaders (Not implemented)')
+        raise AnsibleError(
+            'No code should call find_plugin for Jinja2Loaders (Not implemented)')
 
     def all(self, *args, **kwargs):
         """
@@ -795,7 +825,8 @@ def _load_plugin_filter():
             # Modules and action plugins share the same blacklist since the difference between the
             # two isn't visible to the users
             try:
-                filters['ansible.modules'] = frozenset(filter_data['module_blacklist'])
+                filters['ansible.modules'] = frozenset(
+                    filter_data['module_blacklist'])
             except TypeError:
                 display.warning(u'Unable to parse the plugin filter file {0} as'
                                 u' module_blacklist is not a list.'

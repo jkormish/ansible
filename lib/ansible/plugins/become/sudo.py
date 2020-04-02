@@ -71,7 +71,6 @@ DOCUMENTATION = """
 """
 
 
-
 class BecomeModule(BecomeBase):
 
     name = 'sudo'

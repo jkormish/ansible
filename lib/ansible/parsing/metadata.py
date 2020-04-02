@@ -29,7 +29,8 @@ from ansible.module_utils._text import to_text
 
 # There are currently defaults for all metadata fields so we can add it
 # automatically if a file doesn't specify it
-DEFAULT_METADATA = {'metadata_version': '1.1', 'status': ['preview'], 'supported_by': 'community'}
+DEFAULT_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'], 'supported_by': 'community'}
 
 
 class ParseError(Exception):
@@ -106,7 +107,8 @@ def _seek_end_of_dict(module_data, start_line, start_col, next_node_line, next_n
         # Harder cases involving multiple statements on one line
         # Good Ansible Module style doesn't do this so we're just going to
         # treat this as an error for now:
-        raise ParseError('Multiple statements per line confuses the module metadata parser.')
+        raise ParseError(
+            'Multiple statements per line confuses the module metadata parser.')
 
     return end_line, end_col
 
@@ -174,7 +176,8 @@ def extract_metadata(module_ast=None, module_data=None, offsets=False):
     :raises SyntaxError: if ``module_data`` is needed but does not parse correctly
     """
     if offsets and module_data is None:
-        raise TypeError('If offsets is True then module_data must also be given')
+        raise TypeError(
+            'If offsets is True then module_data must also be given')
 
     if module_ast is None and module_data is None:
         raise TypeError('One of module_ast or module_data must be given')
@@ -222,14 +225,16 @@ def extract_metadata(module_ast=None, module_data=None, offsets=False):
                                                                 next_lineno,
                                                                 next_col_offset)
                     elif isinstance(child.value, ast.Bytes):
-                        metadata = yaml.safe_load(to_text(child.value.s, errors='surrogate_or_strict'))
+                        metadata = yaml.safe_load(
+                            to_text(child.value.s, errors='surrogate_or_strict'))
                         end_line, end_col = _seek_end_of_string(module_data,
                                                                 child.lineno - 1,
                                                                 child.col_offset,
                                                                 next_lineno,
                                                                 next_col_offset)
                     else:
-                        raise ParseError('Ansible plugin metadata must be a dict')
+                        raise ParseError(
+                            'Ansible plugin metadata must be a dict')
 
                     # Do these after the if-else so we don't pollute them in
                     # case this was a false positive

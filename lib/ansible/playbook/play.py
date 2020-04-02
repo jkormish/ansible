@@ -53,17 +53,22 @@ class Play(Base, Taggable, CollectionSearch):
     """
 
     # =================================================================================
-    _hosts = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True, priority=-1)
+    _hosts = FieldAttribute(isa='list', required=True,
+                            listof=string_types, always_post_validate=True, priority=-1)
 
     # Facts
-    _gather_facts = FieldAttribute(isa='bool', default=None, always_post_validate=True)
-    _gather_subset = FieldAttribute(isa='list', default=(lambda: C.DEFAULT_GATHER_SUBSET), listof=string_types, always_post_validate=True)
-    _gather_timeout = FieldAttribute(isa='int', default=C.DEFAULT_GATHER_TIMEOUT, always_post_validate=True)
+    _gather_facts = FieldAttribute(
+        isa='bool', default=None, always_post_validate=True)
+    _gather_subset = FieldAttribute(isa='list', default=(
+        lambda: C.DEFAULT_GATHER_SUBSET), listof=string_types, always_post_validate=True)
+    _gather_timeout = FieldAttribute(
+        isa='int', default=C.DEFAULT_GATHER_TIMEOUT, always_post_validate=True)
     _fact_path = FieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
 
     # Variable Attributes
     _vars_files = FieldAttribute(isa='list', default=list, priority=99)
-    _vars_prompt = FieldAttribute(isa='list', default=list, always_post_validate=False)
+    _vars_prompt = FieldAttribute(
+        isa='list', default=list, always_post_validate=False)
 
     # Role Attributes
     _roles = FieldAttribute(isa='list', default=list, priority=90)
@@ -75,10 +80,14 @@ class Play(Base, Taggable, CollectionSearch):
     _tasks = FieldAttribute(isa='list', default=list)
 
     # Flag/Setting Attributes
-    _force_handlers = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('force_handlers'), always_post_validate=True)
-    _max_fail_percentage = FieldAttribute(isa='percent', always_post_validate=True)
-    _serial = FieldAttribute(isa='list', default=list, always_post_validate=True)
-    _strategy = FieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
+    _force_handlers = FieldAttribute(isa='bool', default=context.cliargs_deferred_get(
+        'force_handlers'), always_post_validate=True)
+    _max_fail_percentage = FieldAttribute(
+        isa='percent', always_post_validate=True)
+    _serial = FieldAttribute(isa='list', default=list,
+                             always_post_validate=True)
+    _strategy = FieldAttribute(
+        isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
     _order = FieldAttribute(isa='string', always_post_validate=True)
 
     # =================================================================================
@@ -91,7 +100,8 @@ class Play(Base, Taggable, CollectionSearch):
         self._removed_hosts = []
         self.ROLE_CACHE = {}
 
-        self.only_tags = set(context.CLIARGS.get('tags', [])) or frozenset(('all',))
+        self.only_tags = set(context.CLIARGS.get(
+            'tags', [])) or frozenset(('all',))
         self.skip_tags = set(context.CLIARGS.get('skip_tags', []))
 
     def __repr__(self):
@@ -105,7 +115,8 @@ class Play(Base, Taggable, CollectionSearch):
     def load(data, variable_manager=None, loader=None, vars=None):
         if ('name' not in data or data['name'] is None) and 'hosts' in data:
             if data['hosts'] is None or all(host is None for host in data['hosts']):
-                raise AnsibleParserError("Hosts list cannot be empty - please check your playbook")
+                raise AnsibleParserError(
+                    "Hosts list cannot be empty - please check your playbook")
             if isinstance(data['hosts'], list):
                 data['name'] = ','.join(data['hosts'])
             else:
@@ -121,7 +132,8 @@ class Play(Base, Taggable, CollectionSearch):
         '''
 
         if not isinstance(ds, dict):
-            raise AnsibleAssertionError('while preprocessing data (%s), ds should be a dict but was a %s' % (ds, type(ds)))
+            raise AnsibleAssertionError(
+                'while preprocessing data (%s), ds should be a dict but was a %s' % (ds, type(ds)))
 
         # The use of 'user' in the Play datastructure was deprecated to
         # line up with the same change for Tasks, due to the fact that
@@ -146,7 +158,8 @@ class Play(Base, Taggable, CollectionSearch):
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
         except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading tasks: %s" % to_native(e), obj=self._ds, orig_exc=e)
+            raise AnsibleParserError("A malformed block was encountered while loading tasks: %s" % to_native(
+                e), obj=self._ds, orig_exc=e)
 
     def _load_pre_tasks(self, attr, ds):
         '''
@@ -156,7 +169,8 @@ class Play(Base, Taggable, CollectionSearch):
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
         except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading pre_tasks", obj=self._ds, orig_exc=e)
+            raise AnsibleParserError(
+                "A malformed block was encountered while loading pre_tasks", obj=self._ds, orig_exc=e)
 
     def _load_post_tasks(self, attr, ds):
         '''
@@ -166,7 +180,8 @@ class Play(Base, Taggable, CollectionSearch):
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
         except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading post_tasks", obj=self._ds, orig_exc=e)
+            raise AnsibleParserError(
+                "A malformed block was encountered while loading post_tasks", obj=self._ds, orig_exc=e)
 
     def _load_handlers(self, attr, ds):
         '''
@@ -176,11 +191,13 @@ class Play(Base, Taggable, CollectionSearch):
         try:
             return self._extend_value(
                 self.handlers,
-                load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader),
+                load_list_of_blocks(ds=ds, play=self, use_handlers=True,
+                                    variable_manager=self._variable_manager, loader=self._loader),
                 prepend=True
             )
         except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading handlers", obj=self._ds, orig_exc=e)
+            raise AnsibleParserError(
+                "A malformed block was encountered while loading handlers", obj=self._ds, orig_exc=e)
 
     def _load_roles(self, attr, ds):
         '''
@@ -195,7 +212,8 @@ class Play(Base, Taggable, CollectionSearch):
             role_includes = load_list_of_roles(ds, play=self, variable_manager=self._variable_manager,
                                                loader=self._loader, collection_search_list=self.collections)
         except AssertionError as e:
-            raise AnsibleParserError("A malformed role declaration was encountered.", obj=self._ds, orig_exc=e)
+            raise AnsibleParserError(
+                "A malformed role declaration was encountered.", obj=self._ds, orig_exc=e)
 
         roles = []
         for ri in role_includes:
@@ -211,10 +229,12 @@ class Play(Base, Taggable, CollectionSearch):
         if new_ds is not None:
             for prompt_data in new_ds:
                 if 'name' not in prompt_data:
-                    raise AnsibleParserError("Invalid vars_prompt data structure, missing 'name' key", obj=ds)
+                    raise AnsibleParserError(
+                        "Invalid vars_prompt data structure, missing 'name' key", obj=ds)
                 for key in prompt_data:
                     if key not in ('name', 'prompt', 'default', 'private', 'confirm', 'encrypt', 'salt_size', 'salt', 'unsafe'):
-                        raise AnsibleParserError("Invalid vars_prompt data structure, found unsupported key '%s'" % key, obj=ds)
+                        raise AnsibleParserError(
+                            "Invalid vars_prompt data structure, found unsupported key '%s'" % key, obj=ds)
                 vars_prompts.append(prompt_data)
         return vars_prompts
 

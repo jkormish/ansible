@@ -32,7 +32,8 @@ def _generic_g(prop_name, self):
     try:
         value = self._attributes[prop_name]
     except KeyError:
-        raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+        raise AttributeError("'%s' object has no attribute '%s'" %
+                             (self.__class__.__name__, prop_name))
 
     if value is Sentinel:
         value = self._attr_defaults[prop_name]
@@ -47,7 +48,8 @@ def _generic_g_method(prop_name, self):
         method = "_get_attr_%s" % prop_name
         return getattr(self, method)()
     except KeyError:
-        raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+        raise AttributeError("'%s' object has no attribute '%s'" %
+                             (self.__class__.__name__, prop_name))
 
 
 def _generic_g_parent(prop_name, self):
@@ -60,7 +62,8 @@ def _generic_g_parent(prop_name, self):
             except AttributeError:
                 value = self._attributes[prop_name]
     except KeyError:
-        raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+        raise AttributeError("'%s' object has no attribute '%s'" %
+                             (self.__class__.__name__, prop_name))
 
     if value is Sentinel:
         value = self._attr_defaults[prop_name]
@@ -119,7 +122,8 @@ class BaseMeta(type):
                     dst_dict['_attr_defaults'][attr_name] = value.default
 
                     if value.alias is not None:
-                        dst_dict[value.alias] = property(getter, setter, deleter)
+                        dst_dict[value.alias] = property(
+                            getter, setter, deleter)
                         dst_dict['_valid_attrs'][value.alias] = value
                         dst_dict['_alias_attrs'][value.alias] = attr_name
 
@@ -182,8 +186,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
     def dump_me(self, depth=0):
         ''' this is never called from production code, it is here to be used when debugging as a 'complex print' '''
         if depth == 0:
-            display.debug("DUMPING OBJECT ------------------------------------------------------")
-        display.debug("%s- %s (%s, id=%s)" % (" " * depth, self.__class__.__name__, self, id(self)))
+            display.debug(
+                "DUMPING OBJECT ------------------------------------------------------")
+        display.debug("%s- %s (%s, id=%s)" %
+                      (" " * depth, self.__class__.__name__, self, id(self)))
         if hasattr(self, '_parent') and self._parent:
             self._parent.dump_me(depth + 2)
             dep_chain = self._parent.get_dep_chain()
@@ -201,7 +207,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         ''' walk the input datastructure and assign any values '''
 
         if ds is None:
-            raise AnsibleAssertionError('ds (%s) should not be None but it is.' % ds)
+            raise AnsibleAssertionError(
+                'ds (%s) should not be None but it is.' % ds)
 
         # cache the datastructure internally
         setattr(self, '_ds', ds)
@@ -256,9 +263,11 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
     def _post_validate_debugger(self, attr, value, templar):
         value = templar.template(value)
-        valid_values = frozenset(('always', 'on_failed', 'on_unreachable', 'on_skipped', 'never'))
+        valid_values = frozenset(
+            ('always', 'on_failed', 'on_unreachable', 'on_skipped', 'never'))
         if value and isinstance(value, string_types) and value not in valid_values:
-            raise AnsibleParserError("'%s' is not a valid value for debugger. Must be one of %s" % (value, ', '.join(valid_values)), obj=self.get_ds())
+            raise AnsibleParserError("'%s' is not a valid value for debugger. Must be one of %s" % (
+                value, ', '.join(valid_values)), obj=self.get_ds())
         return value
 
     def _validate_attributes(self, ds):
@@ -270,7 +279,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         valid_attrs = frozenset(self._valid_attrs.keys())
         for key in ds:
             if key not in valid_attrs:
-                raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (key, self.__class__.__name__), obj=ds)
+                raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (
+                    key, self.__class__.__name__), obj=ds)
 
     def validate(self, all_vars=None):
         ''' validation that is done at parse time, not load time '''
@@ -321,7 +331,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             if name in self._alias_attrs:
                 continue
             new_me._attributes[name] = shallowcopy(self._attributes[name])
-            new_me._attr_defaults[name] = shallowcopy(self._attr_defaults[name])
+            new_me._attr_defaults[name] = shallowcopy(
+                self._attr_defaults[name])
 
         new_me._loader = self._loader
         new_me._variable_manager = self._variable_manager
@@ -362,7 +373,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                                                  "but the item '%s' is a %s" % (name, attribute.listof, item, type(item)), obj=self.get_ds())
                     elif attribute.required and attribute.listof == string_types:
                         if item is None or item.strip() == "":
-                            raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,), obj=self.get_ds())
+                            raise AnsibleParserError(
+                                "the field '%s' is required, and cannot have empty values" % (name,), obj=self.get_ds())
         elif attribute.isa == 'set':
             if value is None:
                 value = set()
@@ -382,7 +394,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 raise TypeError("%s is not a dictionary" % value)
         elif attribute.isa == 'class':
             if not isinstance(value, attribute.class_type):
-                raise TypeError("%s is not a valid %s (got a %s instead)" % (name, attribute.class_type, type(value)))
+                raise TypeError("%s is not a valid %s (got a %s instead)" % (
+                    name, attribute.class_type, type(value)))
             value.post_validate(templar=templar)
         return value
 
@@ -411,7 +424,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 if not attribute.required:
                     continue
                 else:
-                    raise AnsibleParserError("the field '%s' is required but was not set" % name)
+                    raise AnsibleParserError(
+                        "the field '%s' is required but was not set" % name)
             elif not attribute.always_post_validate and self.__class__.__name__ not in ('Task', 'Handler', 'PlayContext'):
                 # Intermediate objects like Play() won't have their fields validated by
                 # default, as their values are often inherited by other objects and validated
@@ -441,7 +455,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
                 # and make sure the attribute is of the type it should be
                 if value is not None:
-                    value = self.get_validated_value(name, attribute, value, templar)
+                    value = self.get_validated_value(
+                        name, attribute, value, templar)
 
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)
@@ -452,10 +467,13 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             except (AnsibleUndefinedVariable, UndefinedError) as e:
                 if templar._fail_on_undefined_errors and name != 'name':
                     if name == 'args':
-                        msg = "The task includes an option with an undefined variable. The error was: %s" % (to_native(e))
+                        msg = "The task includes an option with an undefined variable. The error was: %s" % (
+                            to_native(e))
                     else:
-                        msg = "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (name, to_native(e))
-                    raise AnsibleParserError(msg, obj=self.get_ds(), orig_exc=e)
+                        msg = "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (
+                            name, to_native(e))
+                    raise AnsibleParserError(
+                        msg, obj=self.get_ds(), orig_exc=e)
 
         self._finalized = True
 
@@ -491,7 +509,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             raise AnsibleParserError("Vars in a %s must be specified as a dictionary, or a list of dictionaries" % self.__class__.__name__,
                                      obj=ds, orig_exc=e)
         except TypeError as e:
-            raise AnsibleParserError("Invalid variable name in vars specified for %s: %s" % (self.__class__.__name__, e), obj=ds, orig_exc=e)
+            raise AnsibleParserError("Invalid variable name in vars specified for %s: %s" % (
+                self.__class__.__name__, e), obj=ds, orig_exc=e)
 
     def _extend_value(self, value, new_value, prepend=False):
         '''
@@ -572,7 +591,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         '''
 
         if not isinstance(data, dict):
-            raise AnsibleAssertionError('data (%s) should be a dict but is a %s' % (data, type(data)))
+            raise AnsibleAssertionError(
+                'data (%s) should be a dict but is a %s' % (data, type(data)))
 
         for (name, attribute) in iteritems(self._valid_attrs):
             if name in data:
@@ -591,15 +611,19 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
 class Base(FieldAttributeBase):
 
-    _name = FieldAttribute(isa='string', default='', always_post_validate=True, inherit=False)
+    _name = FieldAttribute(isa='string', default='',
+                           always_post_validate=True, inherit=False)
 
     # connection/transport
-    _connection = FieldAttribute(isa='string', default=context.cliargs_deferred_get('connection'))
+    _connection = FieldAttribute(
+        isa='string', default=context.cliargs_deferred_get('connection'))
     _port = FieldAttribute(isa='int')
-    _remote_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('remote_user'))
+    _remote_user = FieldAttribute(
+        isa='string', default=context.cliargs_deferred_get('remote_user'))
 
     # variables
-    _vars = FieldAttribute(isa='dict', priority=100, inherit=False, static=True)
+    _vars = FieldAttribute(isa='dict', priority=100,
+                           inherit=False, static=True)
 
     # module default params
     _module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)
@@ -610,8 +634,10 @@ class Base(FieldAttributeBase):
     _run_once = FieldAttribute(isa='bool')
     _ignore_errors = FieldAttribute(isa='bool')
     _ignore_unreachable = FieldAttribute(isa='bool')
-    _check_mode = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('check'))
-    _diff = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('diff'))
+    _check_mode = FieldAttribute(
+        isa='bool', default=context.cliargs_deferred_get('check'))
+    _diff = FieldAttribute(
+        isa='bool', default=context.cliargs_deferred_get('diff'))
     _any_errors_fatal = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL)
     _throttle = FieldAttribute(isa='int', default=0)
 
@@ -619,11 +645,16 @@ class Base(FieldAttributeBase):
     _debugger = FieldAttribute(isa='string')
 
     # Privilege escalation
-    _become = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('become'))
-    _become_method = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_method'))
-    _become_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_user'))
-    _become_flags = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_flags'))
-    _become_exe = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_exe'))
+    _become = FieldAttribute(
+        isa='bool', default=context.cliargs_deferred_get('become'))
+    _become_method = FieldAttribute(
+        isa='string', default=context.cliargs_deferred_get('become_method'))
+    _become_user = FieldAttribute(
+        isa='string', default=context.cliargs_deferred_get('become_user'))
+    _become_flags = FieldAttribute(
+        isa='string', default=context.cliargs_deferred_get('become_flags'))
+    _become_exe = FieldAttribute(
+        isa='string', default=context.cliargs_deferred_get('become_exe'))
 
     # used to hold sudo/su stuff
     DEPRECATED_ATTRIBUTES = []

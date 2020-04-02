@@ -84,7 +84,8 @@ class PlayContext(Base):
     '''
 
     # base
-    _module_compression = FieldAttribute(isa='string', default=C.DEFAULT_MODULE_COMPRESSION)
+    _module_compression = FieldAttribute(
+        isa='string', default=C.DEFAULT_MODULE_COMPRESSION)
     _shell = FieldAttribute(isa='string')
     _executable = FieldAttribute(isa='string', default=C.DEFAULT_EXECUTABLE)
 
@@ -94,7 +95,8 @@ class PlayContext(Base):
     _password = FieldAttribute(isa='string')
     _timeout = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
     _connection_user = FieldAttribute(isa='string')
-    _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
+    _private_key_file = FieldAttribute(
+        isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
     _pipelining = FieldAttribute(isa='bool', default=C.ANSIBLE_PIPELINING)
 
     # networking modules
@@ -104,13 +106,15 @@ class PlayContext(Base):
     _docker_extra_args = FieldAttribute(isa='string')
 
     # ssh # FIXME: remove these
-    _ssh_executable = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_EXECUTABLE)
+    _ssh_executable = FieldAttribute(
+        isa='string', default=C.ANSIBLE_SSH_EXECUTABLE)
     _ssh_args = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_ARGS)
     _ssh_common_args = FieldAttribute(isa='string')
     _sftp_extra_args = FieldAttribute(isa='string')
     _scp_extra_args = FieldAttribute(isa='string')
     _ssh_extra_args = FieldAttribute(isa='string')
-    _ssh_transfer_method = FieldAttribute(isa='string', default=C.DEFAULT_SSH_TRANSFER_METHOD)
+    _ssh_transfer_method = FieldAttribute(
+        isa='string', default=C.DEFAULT_SSH_TRANSFER_METHOD)
 
     # ???
     _connection_lockfd = FieldAttribute(isa='int')
@@ -121,7 +125,8 @@ class PlayContext(Base):
     _become_user = FieldAttribute(isa='string')
     _become_pass = FieldAttribute(isa='string')
     _become_exe = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_EXE)
-    _become_flags = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_FLAGS)
+    _become_flags = FieldAttribute(
+        isa='string', default=C.DEFAULT_BECOME_FLAGS)
     _prompt = FieldAttribute(isa='string')
 
     # general flags
@@ -167,7 +172,8 @@ class PlayContext(Base):
         # generic derived from connection plugin, temporary for backwards compat, in the end we should not set play_context properties
 
         # get options for plugins
-        options = C.config.get_configuration_definitions(get_plugin_class(plugin), plugin._load_name)
+        options = C.config.get_configuration_definitions(
+            get_plugin_class(plugin), plugin._load_name)
         for option in options:
             if option:
                 flag = options[option].get('name')
@@ -188,15 +194,21 @@ class PlayContext(Base):
 
         # From the command line.  These should probably be used directly by plugins instead
         # For now, they are likely to be moved to FieldAttribute defaults
-        self.private_key_file = context.CLIARGS.get('private_key_file')  # Else default
+        self.private_key_file = context.CLIARGS.get(
+            'private_key_file')  # Else default
         self.verbosity = context.CLIARGS.get('verbosity')  # Else default
-        self.ssh_common_args = context.CLIARGS.get('ssh_common_args')  # Else default
-        self.ssh_extra_args = context.CLIARGS.get('ssh_extra_args')  # Else default
-        self.sftp_extra_args = context.CLIARGS.get('sftp_extra_args')  # Else default
-        self.scp_extra_args = context.CLIARGS.get('scp_extra_args')  # Else default
+        self.ssh_common_args = context.CLIARGS.get(
+            'ssh_common_args')  # Else default
+        self.ssh_extra_args = context.CLIARGS.get(
+            'ssh_extra_args')  # Else default
+        self.sftp_extra_args = context.CLIARGS.get(
+            'sftp_extra_args')  # Else default
+        self.scp_extra_args = context.CLIARGS.get(
+            'scp_extra_args')  # Else default
 
         # Not every cli that uses PlayContext has these command line args so have a default
-        self.start_at_task = context.CLIARGS.get('start_at_task', None)  # Else default
+        self.start_at_task = context.CLIARGS.get(
+            'start_at_task', None)  # Else default
 
     def set_task_and_variable_override(self, task, variables, templar):
         '''
@@ -228,7 +240,8 @@ class PlayContext(Base):
             # templated based on the loop variable, so we try and locate
             # the host name in the delegated variable dictionary here
             delegated_host_name = templar.template(task.delegate_to)
-            delegated_vars = variables.get('ansible_delegated_vars', dict()).get(delegated_host_name, dict())
+            delegated_vars = variables.get('ansible_delegated_vars', dict()).get(
+                delegated_host_name, dict())
 
             delegated_transport = C.DEFAULT_TRANSPORT
             for transport_var in C.MAGIC_VARIABLE_MAPPING.get('connection'):
@@ -244,7 +257,8 @@ class PlayContext(Base):
                 if address_var in delegated_vars:
                     break
             else:
-                display.debug("no remote address found for delegated host %s\nusing its name, so success depends on DNS resolution" % delegated_host_name)
+                display.debug(
+                    "no remote address found for delegated host %s\nusing its name, so success depends on DNS resolution" % delegated_host_name)
                 delegated_vars['ansible_host'] = delegated_host_name
 
             # reset the port back to the default if none was specified, to prevent
@@ -307,7 +321,8 @@ class PlayContext(Base):
                     break
             else:
                 remote_addr_local = new_info.remote_addr in C.LOCALHOST
-                inv_hostname_local = delegated_vars.get('inventory_hostname') in C.LOCALHOST
+                inv_hostname_local = delegated_vars.get(
+                    'inventory_hostname') in C.LOCALHOST
                 if remote_addr_local and inv_hostname_local:
                     setattr(new_info, 'connection', 'local')
                 elif getattr(new_info, 'connection', None) == 'local' and (not remote_addr_local or not inv_hostname_local):
@@ -371,7 +386,8 @@ class PlayContext(Base):
             if self.become_pass:
                 self.prompt = plugin.prompt
         else:
-            raise AnsibleError("Privilege escalation method not found: %s" % become_method)
+            raise AnsibleError(
+                "Privilege escalation method not found: %s" % become_method)
 
         return cmd
 
