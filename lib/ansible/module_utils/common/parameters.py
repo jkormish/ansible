@@ -87,9 +87,11 @@ def list_no_log_values(argument_spec, params):
 
             if no_log_object:
                 try:
-                    no_log_values.update(_return_datastructure_name(no_log_object))
+                    no_log_values.update(
+                        _return_datastructure_name(no_log_object))
                 except TypeError as e:
-                    raise TypeError('Failed to convert "%s": %s' % (arg_name, to_native(e)))
+                    raise TypeError('Failed to convert "%s": %s' %
+                                    (arg_name, to_native(e)))
 
         # Get no_log values from suboptions
         sub_argument_spec = arg_opts.get('options')
@@ -113,7 +115,8 @@ def list_no_log_values(argument_spec, params):
                             raise TypeError("Value '{1}' in the sub parameter field '{0}' must by a {2}, "
                                             "not '{1.__class__.__name__}'".format(arg_name, sub_param, wanted_type))
 
-                        no_log_values.update(list_no_log_values(sub_argument_spec, sub_param))
+                        no_log_values.update(list_no_log_values(
+                            sub_argument_spec, sub_param))
 
     return no_log_values
 
@@ -151,7 +154,8 @@ def list_deprecations(argument_spec, params, prefix=''):
                 if isinstance(sub_arguments, list):
                     for sub_params in sub_arguments:
                         if isinstance(sub_params, Mapping):
-                            deprecations.extend(list_deprecations(sub_argument_spec, sub_params, prefix=sub_prefix))
+                            deprecations.extend(list_deprecations(
+                                sub_argument_spec, sub_params, prefix=sub_prefix))
 
     return deprecations
 
@@ -174,7 +178,8 @@ def handle_aliases(argument_spec, params, alias_warnings=None):
         required = v.get('required', False)
         if default is not None and required:
             # not alias specific but this is a good place to check this
-            raise ValueError("internal error: required and default are mutually exclusive for %s" % k)
+            raise ValueError(
+                "internal error: required and default are mutually exclusive for %s" % k)
         if aliases is None:
             continue
         if not is_iterable(aliases) or isinstance(aliases, (binary_type, text_type)):

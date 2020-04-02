@@ -87,7 +87,8 @@ def is_executable(path):
 
 
 def format_attributes(attributes):
-    attribute_list = [FILE_ATTRIBUTES.get(attr) for attr in attributes if attr in FILE_ATTRIBUTES]
+    attribute_list = [FILE_ATTRIBUTES.get(
+        attr) for attr in attributes if attr in FILE_ATTRIBUTES]
     return attribute_list
 
 
@@ -121,6 +122,7 @@ class FileLock:
     fcntl.lockf and module_utils.common.file.FileLock as it will certainly cause
     unwanted and/or unexpected behaviour
     '''
+
     def __init__(self):
         self.lockfd = None
 
@@ -150,7 +152,8 @@ class FileLock:
             Default is None, wait indefinitely until lock is released.
         :returns: True
         '''
-        lock_path = os.path.join(tmpdir, 'ansible-{0}.lock'.format(os.path.basename(path)))
+        lock_path = os.path.join(
+            tmpdir, 'ansible-{0}.lock'.format(os.path.basename(path)))
         l_wait = 0.1
         r_exception = IOError
         if sys.version_info[0] == 3:

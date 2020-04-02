@@ -6,6 +6,11 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import AnsibleModule
+from traceback import format_exc
+from tempfile import mkstemp, mkdtemp
+from os import close
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -78,18 +83,12 @@ path:
   sample: "/tmp/ansible.bMlvdk"
 '''
 
-from os import close
-from tempfile import mkstemp, mkdtemp
-from traceback import format_exc
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='file', choices=['file', 'directory']),
+            state=dict(type='str', default='file',
+                       choices=['file', 'directory']),
             path=dict(type='path'),
             prefix=dict(type='str', default='ansible.'),
             suffix=dict(type='str', default=''),

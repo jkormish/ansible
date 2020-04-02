@@ -61,7 +61,8 @@ class DnsFactCollector(BaseFactCollector):
                         option_tokens = option.split(':', 1)
                         if len(option_tokens) == 0:
                             continue
-                        val = len(option_tokens) == 2 and option_tokens[1] or True
+                        val = len(
+                            option_tokens) == 2 and option_tokens[1] or True
                         dns_facts['dns']['options'][option_tokens[0]] = val
 
         return dns_facts

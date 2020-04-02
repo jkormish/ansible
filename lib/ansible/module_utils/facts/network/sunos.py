@@ -51,7 +51,8 @@ class SunOSNetwork(GenericBsdIfconfigNetwork):
                 words = line.split()
 
                 if re.match(r'^\S', line) and len(words) > 3:
-                    current_if = self.parse_interface_line(words, current_if, interfaces)
+                    current_if = self.parse_interface_line(
+                        words, current_if, interfaces)
                     interfaces[current_if['device']] = current_if
                 elif words[0].startswith('options='):
                     self.parse_options_line(words, current_if, ips)
@@ -88,7 +89,8 @@ class SunOSNetwork(GenericBsdIfconfigNetwork):
     def parse_interface_line(self, words, current_if, interfaces):
         device = words[0][0:-1]
         if device not in interfaces:
-            current_if = {'device': device, 'ipv4': [], 'ipv6': [], 'type': 'unknown'}
+            current_if = {'device': device, 'ipv4': [],
+                          'ipv6': [], 'type': 'unknown'}
         else:
             current_if = interfaces[device]
         flags = self.get_options(words[1])

@@ -35,7 +35,8 @@ class LSBFactCollector(BaseFactCollector):
         if not lsb_path:
             return lsb_facts
 
-        rc, out, err = module.run_command([lsb_path, "-a"], errors='surrogate_then_replace')
+        rc, out, err = module.run_command(
+            [lsb_path, "-a"], errors='surrogate_then_replace')
         if rc != 0:
             return lsb_facts
 

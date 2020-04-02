@@ -5,6 +5,18 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.six import b, string_types
+from ansible.module_utils.basic import AnsibleModule, get_module_path
+from distutils.version import LooseVersion
+import tempfile
+import shutil
+import sys
+import stat
+import shlex
+import re
+import os
+import filecmp
 __metaclass__ = type
 
 
@@ -273,24 +285,11 @@ git_dir_before:
     sample: /path/to/old/git/dir
 '''
 
-import filecmp
-import os
-import re
-import shlex
-import stat
-import sys
-import shutil
-import tempfile
-from distutils.version import LooseVersion
-
-from ansible.module_utils.basic import AnsibleModule, get_module_path
-from ansible.module_utils.six import b, string_types
-from ansible.module_utils._text import to_native, to_text
-
 
 def relocate_repo(module, result, repo_dir, old_repo_dir, worktree_dir):
     if os.path.exists(repo_dir):
-        module.fail_json(msg='Separate-git-dir path %s already exists.' % repo_dir)
+        module.fail_json(
+            msg='Separate-git-dir path %s already exists.' % repo_dir)
     if worktree_dir:
         dot_git_file_path = os.path.join(worktree_dir, '.git')
         try:
@@ -329,7 +328,8 @@ def head_splitter(headfile, remote, module=None, fail_on_error=False):
                 res = nrefparts[-1].rstrip('\n')
             except Exception:
                 if fail_on_error and module:
-                    module.fail_json(msg="Unable to split head from '%s'" % rawdata)
+                    module.fail_json(
+                        msg="Unable to split head from '%s'" % rawdata)
     return res
 
 
@@ -451,9 +451,11 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
             submodules[subm_name] = line.strip()
             subm_name = None
         else:
-            module.fail_json(msg='Unable to parse submodule hash line: %s' % line.strip())
+            module.fail_json(
+                msg='Unable to parse submodule hash line: %s' % line.strip())
     if subm_name is not None:
-        module.fail_json(msg='Unable to find hash for submodule: %s' % subm_name)
+        module.fail_json(
+            msg='Unable to find hash for submodule: %s' % subm_name)
 
     return submodules
 
@@ -491,7 +493,8 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
     if separate_git_dir:
         git_version_used = git_version(git_path, module)
         if git_version_used is None:
-            module.fail_json(msg='Can not find git executable at %s' % git_path)
+            module.fail_json(
+                msg='Can not find git executable at %s' % git_path)
         if git_version_used < LooseVersion('1.7.5'):
             # git before 1.7.5 doesn't have separate-git-dir argument, do fallback
             needs_separate_git_dir_fallback = True
@@ -501,10 +504,12 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
     cmd.extend([repo, dest])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
     if needs_separate_git_dir_fallback:
-        relocate_repo(module, result, separate_git_dir, os.path.join(dest, ".git"), dest)
+        relocate_repo(module, result, separate_git_dir,
+                      os.path.join(dest, ".git"), dest)
 
     if bare and remote != 'origin':
-        module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
+        module.run_command(
+            [git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
 
     if refspec:
         cmd = [git_path, 'fetch']
@@ -546,7 +551,8 @@ def get_diff(module, git_path, dest, repo, remote, depth, bare, before, after):
     elif before != after:
         # Ensure we have the object we are referring to during git diff !
         git_version_used = git_version(git_path, module)
-        fetch(git_path, module, repo, dest, after, remote, depth, bare, '', git_version_used)
+        fetch(git_path, module, repo, dest, after,
+              remote, depth, bare, '', git_version_used)
         cmd = '%s diff %s %s' % (git_path, before, after)
         (rc, out, err) = module.run_command(cmd, cwd=dest)
         if rc == 0 and out:
@@ -576,7 +582,8 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
             cmd = '%s ls-remote %s -h HEAD' % (git_path, remote)
         else:
             head_branch = get_head_branch(git_path, module, dest, remote, bare)
-            cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, head_branch)
+            cmd = '%s ls-remote %s -h refs/heads/%s' % (
+                git_path, remote, head_branch)
     elif is_remote_branch(git_path, module, dest, remote, version):
         cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, version)
     elif is_remote_tag(git_path, module, dest, remote, version):
@@ -588,7 +595,8 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
         return version
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=cwd)
     if len(out) < 1:
-        module.fail_json(msg="Could not determine remote revision for %s" % version, stdout=out, stderr=err, rc=rc)
+        module.fail_json(msg="Could not determine remote revision for %s" %
+                         version, stdout=out, stderr=err, rc=rc)
 
     out = to_native(out)
 
@@ -619,7 +627,8 @@ def get_branches(git_path, module, dest):
     cmd = '%s branch --no-color -a' % (git_path,)
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
-        module.fail_json(msg="Could not determine branch data - received %s" % out, stdout=out, stderr=err)
+        module.fail_json(
+            msg="Could not determine branch data - received %s" % out, stdout=out, stderr=err)
     for line in out.split('\n'):
         if line.strip():
             branches.append(line.strip())
@@ -628,10 +637,12 @@ def get_branches(git_path, module, dest):
 
 def get_annotated_tags(git_path, module, dest):
     tags = []
-    cmd = [git_path, 'for-each-ref', 'refs/tags/', '--format', '%(objecttype):%(refname:short)']
+    cmd = [git_path, 'for-each-ref', 'refs/tags/',
+           '--format', '%(objecttype):%(refname:short)']
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
-        module.fail_json(msg="Could not determine tag data - received %s" % out, stdout=out, stderr=err)
+        module.fail_json(
+            msg="Could not determine tag data - received %s" % out, stdout=out, stderr=err)
     for line in to_native(out).split('\n'):
         if line.strip():
             tagtype, tagname = line.strip().split(':')
@@ -771,8 +782,10 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, g
                 # this workaround is only needed for older git versions
                 # 1.8.3 is broken, 1.9.x works
                 # ensure that remote branch is available as both local and remote ref
-                refspecs.append('+refs/heads/%s:refs/heads/%s' % (version, version))
-            refspecs.append('+refs/heads/%s:refs/remotes/%s/%s' % (version, remote, version))
+                refspecs.append('+refs/heads/%s:refs/heads/%s' %
+                                (version, version))
+            refspecs.append('+refs/heads/%s:refs/remotes/%s/%s' %
+                            (version, remote, version))
         elif is_remote_tag(git_path, module, dest, repo, version):
             refspecs.append('+refs/tags/' + version + ':refs/tags/' + version)
         if refspecs:
@@ -786,7 +799,8 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, g
         # don't try to be minimalistic but do a full clone
         # also do this if depth is given, but version is something that can't be fetched directly
         if bare:
-            refspecs = ['+refs/heads/*:refs/heads/*', '+refs/tags/*:refs/tags/*']
+            refspecs = ['+refs/heads/*:refs/heads/*',
+                        '+refs/tags/*:refs/tags/*']
         else:
             # ensure all tags are fetched
             if git_version_used >= LooseVersion('1.9'):
@@ -804,7 +818,8 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, g
     for (label, command) in commands:
         (rc, out, err) = module.run_command(command, cwd=dest)
         if rc != 0:
-            module.fail_json(msg="Failed to %s: %s %s" % (label, out, err), cmd=command)
+            module.fail_json(msg="Failed to %s: %s %s" %
+                             (label, out, err), cmd=command)
 
 
 def submodules_fetch(git_path, module, remote, track_submodules, dest):
@@ -836,7 +851,8 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
             # Compare against submodule HEAD
             # FIXME: determine this from .gitmodules
             version = 'master'
-            after = get_submodule_versions(git_path, module, dest, '%s/%s' % (remote, version))
+            after = get_submodule_versions(
+                git_path, module, dest, '%s/%s' % (remote, version))
             if begin != after:
                 changed = True
         else:
@@ -844,7 +860,8 @@ def submodules_fetch(git_path, module, remote, track_submodules, dest):
             cmd = [git_path, 'submodule', 'status']
             (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
             if rc != 0:
-                module.fail_json(msg='Failed to retrieve submodule status: %s' % out + err)
+                module.fail_json(
+                    msg='Failed to retrieve submodule status: %s' % out + err)
             for line in out.splitlines():
                 if line[0] != ' ':
                     changed = True
@@ -864,14 +881,16 @@ def submodule_update(git_path, module, dest, track_submodules, force=False):
     cmd = [git_path, 'submodule', 'sync']
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
     if 'remote' in params and track_submodules:
-        cmd = [git_path, 'submodule', 'update', '--init', '--recursive', '--remote']
+        cmd = [git_path, 'submodule', 'update',
+               '--init', '--recursive', '--remote']
     else:
         cmd = [git_path, 'submodule', 'update', '--init', '--recursive']
     if force:
         cmd.append('--force')
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
-        module.fail_json(msg="Failed to init/update submodules: %s" % out + err)
+        module.fail_json(
+            msg="Failed to init/update submodules: %s" % out + err)
     return (rc, out, err)
 
 
@@ -883,18 +902,21 @@ def set_remote_branch(git_path, module, dest, remote, version, depth):
     """
 
     branchref = "+refs/heads/%s:refs/heads/%s" % (version, version)
-    branchref += ' +refs/heads/%s:refs/remotes/%s/%s' % (version, remote, version)
+    branchref += ' +refs/heads/%s:refs/remotes/%s/%s' % (
+        version, remote, version)
     cmd = "%s fetch --depth=%s %s %s" % (git_path, depth, remote, branchref)
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
-        module.fail_json(msg="Failed to fetch branch from remote: %s" % version, stdout=out, stderr=err, rc=rc)
+        module.fail_json(msg="Failed to fetch branch from remote: %s" %
+                         version, stdout=out, stderr=err, rc=rc)
 
 
 def switch_version(git_path, module, dest, remote, version, verify_commit, depth, gpg_whitelist):
     cmd = ''
     if version == 'HEAD':
         branch = get_head_branch(git_path, module, dest, remote)
-        (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, branch), cwd=dest)
+        (rc, out, err) = module.run_command(
+            "%s checkout --force %s" % (git_path, branch), cwd=dest)
         if rc != 0:
             module.fail_json(msg="Failed to checkout branch %s" % branch,
                              stdout=out, stderr=err, rc=rc)
@@ -906,13 +928,17 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
                 # git clone --depth implies --single-branch, which makes
                 # the checkout fail if the version changes
                 # fetch the remote branch, to be able to check it out next
-                set_remote_branch(git_path, module, dest, remote, version, depth)
+                set_remote_branch(git_path, module, dest,
+                                  remote, version, depth)
             if not is_local_branch(git_path, module, dest, version):
-                cmd = "%s checkout --track -b %s %s/%s" % (git_path, version, remote, version)
+                cmd = "%s checkout --track -b %s %s/%s" % (
+                    git_path, version, remote, version)
             else:
-                (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, version), cwd=dest)
+                (rc, out, err) = module.run_command(
+                    "%s checkout --force %s" % (git_path, version), cwd=dest)
                 if rc != 0:
-                    module.fail_json(msg="Failed to checkout branch %s" % version, stdout=out, stderr=err, rc=rc)
+                    module.fail_json(msg="Failed to checkout branch %s" %
+                                     version, stdout=out, stderr=err, rc=rc)
                 cmd = "%s reset --hard %s/%s" % (git_path, remote, version)
         else:
             cmd = "%s checkout --force %s" % (git_path, version)
@@ -939,11 +965,13 @@ def verify_commit_sign(git_path, module, dest, version, gpg_whitelist):
     cmd = "%s %s %s --raw" % (git_path, git_sub, version)
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
-        module.fail_json(msg='Failed to verify GPG signature of commit/tag "%s"' % version, stdout=out, stderr=err, rc=rc)
+        module.fail_json(msg='Failed to verify GPG signature of commit/tag "%s"' %
+                         version, stdout=out, stderr=err, rc=rc)
     if gpg_whitelist:
         fingerprint = get_gpg_fingerprint(err)
         if fingerprint not in gpg_whitelist:
-            module.fail_json(msg='The gpg_whitelist does not include the public key "%s" for this commit' % fingerprint, stdout=out, stderr=err, rc=rc)
+            module.fail_json(msg='The gpg_whitelist does not include the public key "%s" for this commit' %
+                             fingerprint, stdout=out, stderr=err, rc=rc)
     return (rc, out, err)
 
 
@@ -979,7 +1007,8 @@ def git_version(git_path, module):
 
 def git_archive(git_path, module, dest, archive, archive_fmt, archive_prefix, version):
     """ Create git archive in given source directory """
-    cmd = [git_path, 'archive', '--format', archive_fmt, '--output', archive, version]
+    cmd = [git_path, 'archive', '--format',
+           archive_fmt, '--output', archive, version]
     if archive_prefix is not None:
         cmd.insert(-1, '--prefix')
         cmd.insert(-1, archive_prefix)
@@ -1014,7 +1043,8 @@ def create_archive(git_path, module, dest, archive, archive_prefix, version, rep
         tempdir = tempfile.mkdtemp()
         new_archive_dest = os.path.join(tempdir, repo_name)
         new_archive = new_archive_dest + '.' + archive_fmt
-        git_archive(git_path, module, dest, new_archive, archive_fmt, archive_prefix, version)
+        git_archive(git_path, module, dest, new_archive,
+                    archive_fmt, archive_prefix, version)
 
         # filecmp is supposed to be efficient than md5sum checksum
         if filecmp.cmp(new_archive, archive):
@@ -1036,7 +1066,8 @@ def create_archive(git_path, module, dest, archive, archive_prefix, version, rep
                                          % to_text(e))
     else:
         # Perform archive from local directory
-        git_archive(git_path, module, dest, archive, archive_fmt, archive_prefix, version)
+        git_archive(git_path, module, dest, archive,
+                    archive_fmt, archive_prefix, version)
         result.update(changed=True)
 
 
@@ -1107,7 +1138,8 @@ def main():
     # evaluate and set the umask before doing anything else
     if umask is not None:
         if not isinstance(umask, string_types):
-            module.fail_json(msg="umask must be defined as a quoted octal integer")
+            module.fail_json(
+                msg="umask must be defined as a quoted octal integer")
         try:
             umask = int(umask, 8)
         except Exception:
@@ -1122,14 +1154,16 @@ def main():
 
     # We screenscrape a huge amount of git commands so use C locale anytime we
     # call run_command()
-    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+    module.run_command_environ_update = dict(
+        LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
 
     if separate_git_dir:
         separate_git_dir = os.path.realpath(separate_git_dir)
 
     gitconfig = None
     if not dest and allow_clone:
-        module.fail_json(msg="the destination directory must be specified unless clone=no")
+        module.fail_json(
+            msg="the destination directory must be specified unless clone=no")
     elif dest:
         dest = os.path.abspath(dest)
         try:
@@ -1137,7 +1171,8 @@ def main():
             if separate_git_dir and os.path.exists(repo_path) and separate_git_dir != repo_path:
                 result['changed'] = True
                 if not module.check_mode:
-                    relocate_repo(module, result, separate_git_dir, repo_path, dest)
+                    relocate_repo(module, result,
+                                  separate_git_dir, repo_path, dest)
                     repo_path = separate_git_dir
         except (IOError, ValueError) as err:
             # No repo path found
@@ -1159,7 +1194,8 @@ def main():
     git_version_used = git_version(git_path, module)
 
     if depth is not None and git_version_used < LooseVersion('1.9.1'):
-        result['warnings'].append("Your git version is too old to fully support the depth argument. Falling back to full checkouts.")
+        result['warnings'].append(
+            "Your git version is too old to fully support the depth argument. Falling back to full checkouts.")
         depth = None
 
     recursive = module.params['recursive']
@@ -1174,15 +1210,18 @@ def main():
         # * we're doing a check mode test
         # In those cases we do an ls-remote
         if module.check_mode or not allow_clone:
-            remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
+            remote_head = get_remote_head(
+                git_path, module, dest, version, repo, bare)
             result.update(changed=True, after=remote_head)
             if module._diff:
-                diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
+                diff = get_diff(module, git_path, dest, repo, remote,
+                                depth, bare, result['before'], result['after'])
                 if diff:
                     result['diff'] = diff
             module.exit_json(**result)
         # there's no git config, so clone
-        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit, separate_git_dir, result, gpg_whitelist)
+        clone(git_path, module, repo, dest, remote, depth, version, bare, reference,
+              refspec, verify_commit, separate_git_dir, result, gpg_whitelist)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
@@ -1196,7 +1235,8 @@ def main():
                 result.update(changed=True)
                 module.exit_json(**result)
 
-            create_archive(git_path, module, dest, archive, archive_prefix, version, repo, result)
+            create_archive(git_path, module, dest, archive,
+                           archive_prefix, version, repo, result)
 
         module.exit_json(**result)
     else:
@@ -1206,7 +1246,8 @@ def main():
         if local_mods:
             # failure should happen regardless of check mode
             if not force:
-                module.fail_json(msg="Local modifications exist in repository (force=no).", **result)
+                module.fail_json(
+                    msg="Local modifications exist in repository (force=no).", **result)
             # if force and in non-check mode, do a reset
             if not module.check_mode:
                 reset(git_path, module, dest)
@@ -1215,34 +1256,42 @@ def main():
         # exit if already at desired sha version
         if module.check_mode:
             remote_url = get_remote_url(git_path, module, dest, remote)
-            remote_url_changed = remote_url and remote_url != repo and unfrackgitpath(remote_url) != unfrackgitpath(repo)
+            remote_url_changed = remote_url and remote_url != repo and unfrackgitpath(
+                remote_url) != unfrackgitpath(repo)
         else:
-            remote_url_changed = set_remote_url(git_path, module, repo, dest, remote)
+            remote_url_changed = set_remote_url(
+                git_path, module, repo, dest, remote)
         result.update(remote_url_changed=remote_url_changed)
 
         if module.check_mode:
-            remote_head = get_remote_head(git_path, module, dest, version, remote, bare)
-            result.update(changed=(result['before'] != remote_head or remote_url_changed), after=remote_head)
+            remote_head = get_remote_head(
+                git_path, module, dest, version, remote, bare)
+            result.update(changed=(
+                result['before'] != remote_head or remote_url_changed), after=remote_head)
             # FIXME: This diff should fail since the new remote_head is not fetched yet?!
             if module._diff:
-                diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
+                diff = get_diff(module, git_path, dest, repo, remote,
+                                depth, bare, result['before'], result['after'])
                 if diff:
                     result['diff'] = diff
             module.exit_json(**result)
         else:
-            fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, git_version_used)
+            fetch(git_path, module, repo, dest, version, remote,
+                  depth, bare, refspec, git_version_used)
 
         result['after'] = get_version(module, git_path, dest)
 
     # switch to version specified regardless of whether
     # we got new revisions from the repository
     if not bare:
-        switch_version(git_path, module, dest, remote, version, verify_commit, depth, gpg_whitelist)
+        switch_version(git_path, module, dest, remote, version,
+                       verify_commit, depth, gpg_whitelist)
 
     # Deal with submodules
     submodules_updated = False
     if recursive and not bare:
-        submodules_updated = submodules_fetch(git_path, module, remote, track_submodules, dest)
+        submodules_updated = submodules_fetch(
+            git_path, module, remote, track_submodules, dest)
         if submodules_updated:
             result.update(submodules_changed=submodules_updated)
 
@@ -1251,7 +1300,8 @@ def main():
                 module.exit_json(**result)
 
             # Switch to version specified
-            submodule_update(git_path, module, dest, track_submodules, force=force)
+            submodule_update(git_path, module, dest,
+                             track_submodules, force=force)
 
     # determine if we changed anything
     result['after'] = get_version(module, git_path, dest)
@@ -1259,7 +1309,8 @@ def main():
     if result['before'] != result['after'] or local_mods or submodules_updated or remote_url_changed:
         result.update(changed=True)
         if module._diff:
-            diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
+            diff = get_diff(module, git_path, dest, repo, remote,
+                            depth, bare, result['before'], result['after'])
             if diff:
                 result['diff'] = diff
 
@@ -1270,7 +1321,8 @@ def main():
             result.update(changed=True)
             module.exit_json(**result)
 
-        create_archive(git_path, module, dest, archive, archive_prefix, version, repo, result)
+        create_archive(git_path, module, dest, archive,
+                       archive_prefix, version, repo, result)
 
     module.exit_json(**result)
 

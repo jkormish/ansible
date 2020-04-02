@@ -68,13 +68,15 @@ class FreeBSDHardware(Hardware):
         cpu_facts['processor'] = []
         sysctl = self.module.get_bin_path('sysctl')
         if sysctl:
-            rc, out, err = self.module.run_command("%s -n hw.ncpu" % sysctl, check_rc=False)
+            rc, out, err = self.module.run_command(
+                "%s -n hw.ncpu" % sysctl, check_rc=False)
             cpu_facts['processor_count'] = out.strip()
 
         dmesg_boot = get_file_content(FreeBSDHardware.DMESG_BOOT)
         if not dmesg_boot:
             try:
-                rc, dmesg_boot, err = self.module.run_command(self.module.get_bin_path("dmesg"), check_rc=False)
+                rc, dmesg_boot, err = self.module.run_command(
+                    self.module.get_bin_path("dmesg"), check_rc=False)
             except Exception:
                 dmesg_boot = ''
 
@@ -92,7 +94,8 @@ class FreeBSDHardware(Hardware):
 
         sysctl = self.module.get_bin_path('sysctl')
         if sysctl:
-            rc, out, err = self.module.run_command("%s vm.stats" % sysctl, check_rc=False)
+            rc, out, err = self.module.run_command(
+                "%s vm.stats" % sysctl, check_rc=False)
             for line in out.splitlines():
                 data = line.split()
                 if 'vm.stats.vm.v_page_size' in line:
@@ -147,7 +150,8 @@ class FreeBSDHardware(Hardware):
 
         sysdir = '/dev'
         device_facts['devices'] = {}
-        drives = re.compile(r'(ada?\d+|da\d+|a?cd\d+)')  # TODO: rc, disks, err = self.module.run_command("/sbin/sysctl kern.disks")
+        # TODO: rc, disks, err = self.module.run_command("/sbin/sysctl kern.disks")
+        drives = re.compile(r'(ada?\d+|da\d+|a?cd\d+)')
         slices = re.compile(r'(ada?\d+s\d+\w*|da\d+s\d+\w*)')
         if os.path.isdir(sysdir):
             dirlist = sorted(os.listdir(sysdir))
@@ -182,11 +186,13 @@ class FreeBSDHardware(Hardware):
         )
         for (k, v) in DMI_DICT.items():
             if dmi_bin is not None:
-                (rc, out, err) = self.module.run_command('%s -s %s' % (dmi_bin, v))
+                (rc, out, err) = self.module.run_command(
+                    '%s -s %s' % (dmi_bin, v))
                 if rc == 0:
                     # Strip out commented lines (specific dmidecode output)
                     # FIXME: why add the fact and then test if it is json?
-                    dmi_facts[k] = ''.join([line for line in out.splitlines() if not line.startswith('#')])
+                    dmi_facts[k] = ''.join(
+                        [line for line in out.splitlines() if not line.startswith('#')])
                     try:
                         json.dumps(dmi_facts[k])
                     except UnicodeDecodeError:

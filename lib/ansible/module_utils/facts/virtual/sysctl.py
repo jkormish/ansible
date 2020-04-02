@@ -28,7 +28,8 @@ class VirtualSysctlDetectionMixin(object):
         self.detect_sysctl()
         # FIXME: exit early on falsey self.sysctl_path and unindent
         if self.sysctl_path:
-            rc, out, err = self.module.run_command("%s -n %s" % (self.sysctl_path, key))
+            rc, out, err = self.module.run_command(
+                "%s -n %s" % (self.sysctl_path, key))
             if rc == 0:
                 if re.match('(KVM|kvm|Bochs|SmartDC).*', out):
                     virtual_product_facts['virtualization_type'] = 'kvm'
@@ -59,7 +60,8 @@ class VirtualSysctlDetectionMixin(object):
         self.detect_sysctl()
         # FIXME: exit early on falsey self.sysctl_path and unindent
         if self.sysctl_path:
-            rc, out, err = self.module.run_command("%s -n %s" % (self.sysctl_path, key))
+            rc, out, err = self.module.run_command(
+                "%s -n %s" % (self.sysctl_path, key))
             if rc == 0:
                 if out.rstrip() == 'QEMU':
                     virtual_vendor_facts['virtualization_type'] = 'kvm'

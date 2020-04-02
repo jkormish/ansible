@@ -169,4 +169,5 @@ _extra_facts = [
 ]
 
 # TODO: make config driven
-collectors = _base + _restrictive + _general + _virtual + _hardware + _network + _extra_facts
+collectors = _base + _restrictive + _general + \
+    _virtual + _hardware + _network + _extra_facts

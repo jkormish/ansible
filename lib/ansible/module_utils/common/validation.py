@@ -160,7 +160,8 @@ def check_required_by(requirements, module_parameters):
     if result:
         for key, missing in result.items():
             if len(missing) > 0:
-                msg = "missing parameter(s) required by '%s': %s" % (key, ', '.join(missing))
+                msg = "missing parameter(s) required by '%s': %s" % (
+                    key, ', '.join(missing))
                 raise TypeError(to_native(msg))
 
     return result
@@ -428,7 +429,8 @@ def check_type_dict(value):
                 fields.append(field)
             return dict(x.split("=", 1) for x in fields)
         else:
-            raise TypeError("dictionary requested, could not parse JSON or key=value")
+            raise TypeError(
+                "dictionary requested, could not parse JSON or key=value")
 
     raise TypeError('%s cannot be converted to a dict' % type(value))
 

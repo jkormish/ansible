@@ -42,8 +42,10 @@ yumdnf_argument_spec = dict(
         security=dict(type='bool', default=False),
         skip_broken=dict(type='bool', default=False),
         # removed==absent, installed==present, these are accepted as aliases
-        state=dict(type='str', default=None, choices=['absent', 'installed', 'latest', 'present', 'removed']),
-        update_cache=dict(type='bool', default=False, aliases=['expire-cache']),
+        state=dict(type='str', default=None, choices=[
+                   'absent', 'installed', 'latest', 'present', 'removed']),
+        update_cache=dict(type='bool', default=False,
+                          aliases=['expire-cache']),
         update_only=dict(required=False, default="no", type='bool'),
         validate_certs=dict(type='bool', default=True),
         lock_timeout=dict(type='int', default=30),
@@ -95,8 +97,10 @@ class YumDnf(with_metaclass(ABCMeta, object)):
         # It's possible someone passed a comma separated string since it used
         # to be a string type, so we should handle that
         self.names = self.listify_comma_sep_strings_in_list(self.names)
-        self.disablerepo = self.listify_comma_sep_strings_in_list(self.disablerepo)
-        self.enablerepo = self.listify_comma_sep_strings_in_list(self.enablerepo)
+        self.disablerepo = self.listify_comma_sep_strings_in_list(
+            self.disablerepo)
+        self.enablerepo = self.listify_comma_sep_strings_in_list(
+            self.enablerepo)
         self.exclude = self.listify_comma_sep_strings_in_list(self.exclude)
 
         # Fail if someone passed a space separated string
@@ -145,7 +149,8 @@ class YumDnf(with_metaclass(ABCMeta, object)):
                 if not self._is_lockfile_present():
                     return
 
-        self.module.fail_json(msg='{0} lockfile is held by another process'.format(self.pkg_mgr_name))
+        self.module.fail_json(
+            msg='{0} lockfile is held by another process'.format(self.pkg_mgr_name))
 
     def listify_comma_sep_strings_in_list(self, some_list):
         """

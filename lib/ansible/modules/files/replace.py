@@ -6,6 +6,11 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text, to_bytes
+import tempfile
+import re
+import os
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -169,13 +174,6 @@ EXAMPLES = r'''
     replace: '#\g<dctv>\g<host>\n\g<dctv>0.0.0.0'
 '''
 
-import os
-import re
-import tempfile
-
-from ansible.module_utils._text import to_text, to_bytes
-from ansible.module_utils.basic import AnsibleModule
-
 
 def write_changes(module, contents, path):
 
@@ -195,7 +193,8 @@ def write_changes(module, contents, path):
             module.fail_json(msg='failed to validate: '
                                  'rc:%s error:%s' % (rc, err))
     if valid:
-        module.atomic_move(tmpfile, path, unsafe_writes=module.params['unsafe_writes'])
+        module.atomic_move(
+            tmpfile, path, unsafe_writes=module.params['unsafe_writes'])
 
 
 def check_file_attrs(module, changed, message):
@@ -214,7 +213,8 @@ def check_file_attrs(module, changed, message):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(type='path', required=True, aliases=['dest', 'destfile', 'name']),
+            path=dict(type='path', required=True, aliases=[
+                      'dest', 'destfile', 'name']),
             regexp=dict(type='str', required=True),
             replace=dict(type='str', default=''),
             after=dict(type='str'),
@@ -232,10 +232,14 @@ def main():
     encoding = params['encoding']
     res_args = dict()
 
-    params['after'] = to_text(params['after'], errors='surrogate_or_strict', nonstring='passthru')
-    params['before'] = to_text(params['before'], errors='surrogate_or_strict', nonstring='passthru')
-    params['regexp'] = to_text(params['regexp'], errors='surrogate_or_strict', nonstring='passthru')
-    params['replace'] = to_text(params['replace'], errors='surrogate_or_strict', nonstring='passthru')
+    params['after'] = to_text(
+        params['after'], errors='surrogate_or_strict', nonstring='passthru')
+    params['before'] = to_text(
+        params['before'], errors='surrogate_or_strict', nonstring='passthru')
+    params['regexp'] = to_text(
+        params['regexp'], errors='surrogate_or_strict', nonstring='passthru')
+    params['replace'] = to_text(
+        params['replace'], errors='surrogate_or_strict', nonstring='passthru')
 
     if os.path.isdir(path):
         module.fail_json(rc=256, msg='Path %s is a directory !' % path)
@@ -244,12 +248,14 @@ def main():
         module.fail_json(rc=257, msg='Path %s does not exist !' % path)
     else:
         f = open(path, 'rb')
-        contents = to_text(f.read(), errors='surrogate_or_strict', encoding=encoding)
+        contents = to_text(
+            f.read(), errors='surrogate_or_strict', encoding=encoding)
         f.close()
 
     pattern = u''
     if params['after'] and params['before']:
-        pattern = u'%s(?P<subsection>.*?)%s' % (params['after'], params['before'])
+        pattern = u'%s(?P<subsection>.*?)%s' % (
+            params['after'], params['before'])
     elif params['after']:
         pattern = u'%s(?P<subsection>.*)' % params['after']
     elif params['before']:
@@ -273,7 +279,8 @@ def main():
 
     if result[1] > 0 and section != result[0]:
         if pattern:
-            result = (contents[:indices[0]] + result[0] + contents[indices[1]:], result[1])
+            result = (contents[:indices[0]] + result[0] +
+                      contents[indices[1]:], result[1])
         msg = '%s replacements made' % result[1]
         changed = True
         if module._diff:
@@ -294,7 +301,8 @@ def main():
         path = os.path.realpath(path)
         write_changes(module, to_bytes(result[0], encoding=encoding), path)
 
-    res_args['msg'], res_args['changed'] = check_file_attrs(module, changed, msg)
+    res_args['msg'], res_args['changed'] = check_file_attrs(
+        module, changed, msg)
     module.exit_json(**res_args)
 
 

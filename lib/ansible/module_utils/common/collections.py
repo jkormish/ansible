@@ -13,6 +13,7 @@ from ansible.module_utils.common._collections_compat import Hashable, Mapping, S
 
 class ImmutableDict(Hashable, Mapping):
     """Dictionary that cannot be updated"""
+
     def __init__(self, *args, **kwargs):
         self._store = dict(*args, **kwargs)
 

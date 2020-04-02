@@ -5,6 +5,11 @@
 # most of it copied from AWX's scan_packages module
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils.facts.packages import LibMgr, CLIMgr, get_all_pkg_managers
+from ansible.module_utils.common.process import get_bin_path
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils._text import to_native, to_text
+import re
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -206,13 +211,6 @@ ansible_facts:
         }
 '''
 
-import re
-
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.common.process import get_bin_path
-from ansible.module_utils.facts.packages import LibMgr, CLIMgr, get_all_pkg_managers
-
 
 class RPM(LibMgr):
 
@@ -235,7 +233,8 @@ class RPM(LibMgr):
         try:
             get_bin_path('rpm')
             if not we_have_lib:
-                module.warn('Found "rpm" but %s' % (missing_required_lib('rpm')))
+                module.warn('Found "rpm" but %s' %
+                            (missing_required_lib('rpm')))
         except ValueError:
             pass
 
@@ -268,7 +267,8 @@ class APT(LibMgr):
                 except ValueError:
                     continue
                 else:
-                    module.warn('Found "%s" but %s' % (exe, missing_required_lib('apt')))
+                    module.warn('Found "%s" but %s' %
+                                (exe, missing_required_lib('apt')))
                     break
         return we_have_lib
 
@@ -287,7 +287,8 @@ class PACMAN(CLIMgr):
     CLI = 'pacman'
 
     def list_installed(self):
-        rc, out, err = module.run_command([self._cli, '-Qi'], environ_update=dict(LC_ALL='C'))
+        rc, out, err = module.run_command(
+            [self._cli, '-Qi'], environ_update=dict(LC_ALL='C'))
         if rc != 0 or err:
             raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
         return out.split("\n\n")[:-1]
@@ -303,7 +304,8 @@ class PACMAN(CLIMgr):
                 raw_pkg_details[last_detail] = m.group(2)
             else:
                 # append value to previous detail
-                raw_pkg_details[last_detail] = raw_pkg_details[last_detail] + "  " + line.lstrip()
+                raw_pkg_details[last_detail] = raw_pkg_details[last_detail] + \
+                    "  " + line.lstrip()
 
         provides = None
         if raw_pkg_details['Provides'] != 'None':
@@ -323,10 +325,12 @@ class PACMAN(CLIMgr):
 class PKG(CLIMgr):
 
     CLI = 'pkg'
-    atoms = ['name', 'version', 'origin', 'installed', 'automatic', 'arch', 'category', 'prefix', 'vital']
+    atoms = ['name', 'version', 'origin', 'installed',
+             'automatic', 'arch', 'category', 'prefix', 'vital']
 
     def list_installed(self):
-        rc, out, err = module.run_command([self._cli, 'query', "%%%s" % '\t%'.join(['n', 'v', 'R', 't', 'a', 'q', 'o', 'p', 'V'])])
+        rc, out, err = module.run_command([self._cli, 'query', "%%%s" % '\t%'.join(
+            ['n', 'v', 'R', 't', 'a', 'q', 'o', 'p', 'V'])])
         if rc != 0 or err:
             raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
         return out.splitlines()
@@ -349,7 +353,8 @@ class PKG(CLIMgr):
 
         if 'version' in pkg:
             if ',' in pkg['version']:
-                pkg['version'], pkg['port_epoch'] = pkg['version'].split(',', 1)
+                pkg['version'], pkg['port_epoch'] = pkg['version'].split(
+                    ',', 1)
             else:
                 pkg['port_epoch'] = 0
 
@@ -367,12 +372,15 @@ class PKG(CLIMgr):
 class PORTAGE(CLIMgr):
 
     CLI = 'qlist'
-    atoms = ['category', 'name', 'version', 'ebuild_revision', 'slots', 'prefixes', 'sufixes']
+    atoms = ['category', 'name', 'version',
+             'ebuild_revision', 'slots', 'prefixes', 'sufixes']
 
     def list_installed(self):
-        rc, out, err = module.run_command(' '.join([self._cli, '-Iv', '|', 'xargs', '-n', '1024', 'qatom']), use_unsafe_shell=True)
+        rc, out, err = module.run_command(' '.join(
+            [self._cli, '-Iv', '|', 'xargs', '-n', '1024', 'qatom']), use_unsafe_shell=True)
         if rc != 0:
-            raise RuntimeError("Unable to list packages rc=%s : %s" % (rc, to_native(err)))
+            raise RuntimeError(
+                "Unable to list packages rc=%s : %s" % (rc, to_native(err)))
         return out.splitlines()
 
     def get_package_details(self, package):
@@ -405,7 +413,8 @@ def main():
         if 'auto' in module.params['manager']:
             msg = 'Could not auto detect a usable package manager, check warnings for details.'
         else:
-            msg = 'Unsupported package managers requested: %s' % (', '.join(unsupported))
+            msg = 'Unsupported package managers requested: %s' % (
+                ', '.join(unsupported))
         module.fail_json(msg=msg)
 
     found = 0
@@ -429,12 +438,14 @@ def main():
 
             except Exception as e:
                 if pkgmgr in module.params['manager']:
-                    module.warn('Requested package manager %s was not usable by this module: %s' % (pkgmgr, to_text(e)))
+                    module.warn('Requested package manager %s was not usable by this module: %s' % (
+                        pkgmgr, to_text(e)))
                 continue
 
         except Exception as e:
             if pkgmgr in module.params['manager']:
-                module.warn('Failed to retrieve packages with %s: %s' % (pkgmgr, to_text(e)))
+                module.warn('Failed to retrieve packages with %s: %s' %
+                            (pkgmgr, to_text(e)))
 
     if found == 0:
         msg = ('Could not detect a supported package manager from the following list: %s, '

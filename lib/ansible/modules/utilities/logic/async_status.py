@@ -5,6 +5,11 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils._text import to_native
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.basic import AnsibleModule
+import os
+import json
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -78,13 +83,6 @@ started:
   sample: 1
 '''
 
-import json
-import os
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import iteritems
-from ansible.module_utils._text import to_native
-
 
 def main():
 
@@ -104,7 +102,8 @@ def main():
     log_path = os.path.join(logdir, jid)
 
     if not os.path.exists(log_path):
-        module.fail_json(msg="could not find job", ansible_job_id=jid, started=1, finished=1)
+        module.fail_json(msg="could not find job",
+                         ansible_job_id=jid, started=1, finished=1)
 
     if mode == 'cleanup':
         os.unlink(log_path)
@@ -121,7 +120,8 @@ def main():
     except Exception:
         if not data:
             # file not written yet?  That means it is running
-            module.exit_json(results_file=log_path, ansible_job_id=jid, started=1, finished=0)
+            module.exit_json(results_file=log_path,
+                             ansible_job_id=jid, started=1, finished=0)
         else:
             module.fail_json(ansible_job_id=jid, results_file=log_path,
                              msg="Could not parse job output: %s" % data, started=1, finished=1)

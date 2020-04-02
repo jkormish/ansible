@@ -71,12 +71,14 @@ class AIXHardware(Hardware):
                     i += 1
             cpu_facts['processor_count'] = int(i)
 
-            rc, out, err = self.module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a type")
+            rc, out, err = self.module.run_command(
+                "/usr/sbin/lsattr -El " + cpudev + " -a type")
 
             data = out.split(' ')
             cpu_facts['processor'] = data[1]
 
-            rc, out, err = self.module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a smt_threads")
+            rc, out, err = self.module.run_command(
+                "/usr/sbin/lsattr -El " + cpudev + " -a smt_threads")
             if out:
                 data = out.split(' ')
                 cpu_facts['processor_cores'] = int(data[1])
@@ -106,14 +108,16 @@ class AIXHardware(Hardware):
             swaptotal_mb = int(data[0].rstrip('MB'))
             percused = int(data[1].rstrip('%'))
             memory_facts['swaptotal_mb'] = swaptotal_mb
-            memory_facts['swapfree_mb'] = int(swaptotal_mb * (100 - percused) / 100)
+            memory_facts['swapfree_mb'] = int(
+                swaptotal_mb * (100 - percused) / 100)
 
         return memory_facts
 
     def get_dmi_facts(self):
         dmi_facts = {}
 
-        rc, out, err = self.module.run_command("/usr/sbin/lsattr -El sys0 -a fwversion")
+        rc, out, err = self.module.run_command(
+            "/usr/sbin/lsattr -El sys0 -a fwversion")
         data = out.split()
         dmi_facts['firmware_version'] = data[1].strip('IBM,')
         lsconf_path = self.module.get_bin_path("lsconf")
@@ -160,7 +164,8 @@ class AIXHardware(Hardware):
                     cmd = "%s %s" % (lsvg_path, m.group(1))
                     rc, out, err = self.module.run_command(cmd)
                     if rc == 0 and out:
-                        pp_size = re.search(r'PP SIZE:\s+(\d+\s+\S+)', out).group(1)
+                        pp_size = re.search(
+                            r'PP SIZE:\s+(\d+\s+\S+)', out).group(1)
                         for n in re.finditer(r'(\S+)\s+(\w+)\s+(\d+)\s+(\d+).*', m.group(0)):
                             pv_info = {'pv_name': n.group(1),
                                        'pv_state': n.group(2),

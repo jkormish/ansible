@@ -23,7 +23,7 @@ version_added: "2.0"
 author:
 - Brian Brazil (@brian-brazil)  <brian.brazil@boxever.com>
 options:
-    name:
+    name:F
         description:
             - Name of the package
         required: true

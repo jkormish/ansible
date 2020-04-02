@@ -7,6 +7,13 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils._text import to_native
+from ansible.module_utils.six import b, indexbytes
+from ansible.module_utils.basic import AnsibleModule
+import tempfile
+import re
+import os
+import codecs
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -107,15 +114,6 @@ EXAMPLES = r'''
     validate: /usr/sbin/sshd -t -f %s
 '''
 
-import codecs
-import os
-import re
-import tempfile
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import b, indexbytes
-from ansible.module_utils._text import to_native
-
 
 def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, tmpdir=None):
     ''' assemble a file from a directory of fragments '''
@@ -171,7 +169,8 @@ def cleanup(path, result=None):
         except (IOError, OSError) as e:
             # don't error on possible race conditions, but keep warning
             if result is not None:
-                result['warnings'] = ['Unable to remove temp file (%s): %s' % (path, to_native(e))]
+                result['warnings'] = [
+                    'Unable to remove temp file (%s): %s' % (path, to_native(e))]
 
 
 def main():
@@ -214,12 +213,14 @@ def main():
         try:
             compiled_regexp = re.compile(regexp)
         except re.error as e:
-            module.fail_json(msg="Invalid Regexp (%s) in \"%s\"" % (to_native(e), regexp))
+            module.fail_json(msg="Invalid Regexp (%s) in \"%s\"" %
+                             (to_native(e), regexp))
 
     if validate and "%s" not in validate:
         module.fail_json(msg="validate must contain %%s: %s" % validate)
 
-    path = assemble_from_fragments(src, delimiter, compiled_regexp, ignore_hidden, module.tmpdir)
+    path = assemble_from_fragments(
+        src, delimiter, compiled_regexp, ignore_hidden, module.tmpdir)
     path_hash = module.sha1(path)
     result['checksum'] = path_hash
 
@@ -239,18 +240,21 @@ def main():
             result['validation'] = dict(rc=rc, stdout=out, stderr=err)
             if rc != 0:
                 cleanup(path)
-                module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc, err))
+                module.fail_json(
+                    msg="failed to validate: rc:%s error:%s" % (rc, err))
         if backup and dest_hash is not None:
             result['backup_file'] = module.backup_local(dest)
 
-        module.atomic_move(path, dest, unsafe_writes=module.params['unsafe_writes'])
+        module.atomic_move(
+            path, dest, unsafe_writes=module.params['unsafe_writes'])
         changed = True
 
     cleanup(path, result)
 
     # handle file permissions
     file_args = module.load_file_common_arguments(module.params)
-    result['changed'] = module.set_fs_attributes_if_different(file_args, changed)
+    result['changed'] = module.set_fs_attributes_if_different(
+        file_args, changed)
 
     # Mission complete
     result['msg'] = "OK"

@@ -34,8 +34,10 @@ class FacterFactCollector(BaseFactCollector):
                                                   namespace=namespace)
 
     def find_facter(self, module):
-        facter_path = module.get_bin_path('facter', opt_dirs=['/opt/puppetlabs/bin'])
-        cfacter_path = module.get_bin_path('cfacter', opt_dirs=['/opt/puppetlabs/bin'])
+        facter_path = module.get_bin_path(
+            'facter', opt_dirs=['/opt/puppetlabs/bin'])
+        cfacter_path = module.get_bin_path(
+            'cfacter', opt_dirs=['/opt/puppetlabs/bin'])
 
         # Prefer to use cfacter if available
         if cfacter_path is not None:

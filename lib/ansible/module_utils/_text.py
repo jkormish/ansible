@@ -161,7 +161,8 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
     elif nonstring == 'strict':
         raise TypeError('obj must be a string type')
     else:
-        raise TypeError('Invalid value %s for to_bytes\' nonstring parameter' % nonstring)
+        raise TypeError(
+            'Invalid value %s for to_bytes\' nonstring parameter' % nonstring)
 
     return to_bytes(value, encoding, errors)
 
@@ -252,7 +253,8 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
     elif nonstring == 'strict':
         raise TypeError('obj must be a string type')
     else:
-        raise TypeError('Invalid value %s for to_text\'s nonstring parameter' % nonstring)
+        raise TypeError(
+            'Invalid value %s for to_text\'s nonstring parameter' % nonstring)
 
     return to_text(value, encoding, errors)
 

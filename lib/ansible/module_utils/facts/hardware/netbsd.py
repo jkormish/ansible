@@ -91,7 +91,8 @@ class NetBSDHardware(Hardware):
                 sockets[physid] = int(data[1].strip())
         if len(sockets) > 0:
             cpu_facts['processor_count'] = len(sockets)
-            cpu_facts['processor_cores'] = reduce(lambda x, y: x + y, sockets.values())
+            cpu_facts['processor_cores'] = reduce(
+                lambda x, y: x + y, sockets.values())
         else:
             cpu_facts['processor_count'] = i
             cpu_facts['processor_cores'] = 'NA'

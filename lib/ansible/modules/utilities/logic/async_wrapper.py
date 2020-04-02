@@ -105,7 +105,8 @@ def _filter_non_json_lines(data):
         # Trailing junk is uncommon and can point to things the user might
         # want to change.  So print a warning if we find any
         trailing_junk = lines[len(lines) - reverse_end_offset:]
-        warnings.append('Module invocation had junk after the JSON data: %s' % '\n'.join(trailing_junk))
+        warnings.append(
+            'Module invocation had junk after the JSON data: %s' % '\n'.join(trailing_junk))
 
     lines = lines[:(len(lines) - reverse_end_offset)]
 
@@ -127,7 +128,8 @@ def _run_module(wrapped_cmd, jid, job_path):
 
     tmp_job_path = job_path + ".tmp"
     jobfile = open(tmp_job_path, "w")
-    jobfile.write(json.dumps({"started": 1, "finished": 0, "ansible_job_id": jid}))
+    jobfile.write(json.dumps(
+        {"started": 1, "finished": 0, "ansible_job_id": jid}))
     jobfile.close()
     os.rename(tmp_job_path, job_path)
     jobfile = open(tmp_job_path, "w")
@@ -307,7 +309,8 @@ def main():
                         notice("Sent kill to group %s " % sub_pid)
                         time.sleep(1)
                         if not preserve_tmp:
-                            shutil.rmtree(os.path.dirname(wrapped_module), True)
+                            shutil.rmtree(os.path.dirname(
+                                wrapped_module), True)
                         sys.exit(0)
                 notice("Done in kid B.")
                 if not preserve_tmp:

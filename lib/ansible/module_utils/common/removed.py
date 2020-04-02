@@ -54,7 +54,8 @@ def removed_module(removed_in, msg='This module has been removed. The module doc
         last_version = '.'.join(version)
 
     if last_version is None:
-        results['warnings'] = ['removed modules should specify the version they were removed in']
+        results['warnings'] = [
+            'removed modules should specify the version they were removed in']
         results['msg'] = 'This module has been removed'
     else:
         results['msg'] = msg % {'version': last_version}

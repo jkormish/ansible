@@ -5,6 +5,9 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils.basic import AnsibleModule
+import re
+import os
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -108,11 +111,6 @@ EXAMPLES = '''
     update: no
 '''
 
-import os
-import re
-
-from ansible.module_utils.basic import AnsibleModule
-
 
 class Subversion(object):
     def __init__(self, module, dest, repo, revision, username, password, svn_path):
@@ -170,7 +168,8 @@ class Subversion(object):
         '''Change working directory's repo.'''
         # switch to ensure we are pointing at correct repo.
         # it also updates!
-        output = self._exec(["switch", "--revision", self.revision, self.repo, self.dest])
+        output = self._exec(
+            ["switch", "--revision", self.revision, self.repo, self.dest])
         for line in output:
             if re.search(r'^[ABDUCGE]\s', line):
                 return True
@@ -208,7 +207,8 @@ class Subversion(object):
 
     def has_local_mods(self):
         '''True if revisioned files have been added or modified. Unrevisioned files are ignored.'''
-        lines = self._exec(["status", "--quiet", "--ignore-externals", self.dest])
+        lines = self._exec(
+            ["status", "--quiet", "--ignore-externals", self.dest])
         # The --quiet option will return only modified files.
         # Match only revisioned files, i.e. ignore status '?'.
         regex = re.compile(r'^[^?X]')
@@ -231,8 +231,10 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             dest=dict(type='path'),
-            repo=dict(type='str', required=True, aliases=['name', 'repository']),
-            revision=dict(type='str', default='HEAD', aliases=['rev', 'version']),
+            repo=dict(type='str', required=True,
+                      aliases=['name', 'repository']),
+            revision=dict(type='str', default='HEAD',
+                          aliases=['rev', 'version']),
             force=dict(type='bool', default=False),
             username=dict(type='str'),
             password=dict(type='str', no_log=True),
@@ -264,9 +266,11 @@ def main():
     module.run_command_environ_update = dict(LANG='C', LC_MESSAGES='C')
 
     if not dest and (checkout or update or export):
-        module.fail_json(msg="the destination directory must be specified unless checkout=no, update=no, and export=no")
+        module.fail_json(
+            msg="the destination directory must be specified unless checkout=no, update=no, and export=no")
 
-    svn = Subversion(module, dest, repo, revision, username, password, svn_path)
+    svn = Subversion(module, dest, repo, revision,
+                     username, password, svn_path)
 
     if not export and not update and not checkout:
         module.exit_json(changed=False, after=svn.get_remote_revision())
@@ -291,7 +295,8 @@ def main():
             module.exit_json(changed=False)
         if module.check_mode:
             if svn.has_local_mods() and not force:
-                module.fail_json(msg="ERROR: modified files exist in the repository.")
+                module.fail_json(
+                    msg="ERROR: modified files exist in the repository.")
             check, before, after = svn.needs_update()
             module.exit_json(changed=check, before=before, after=after)
         files_changed = False
@@ -303,7 +308,8 @@ def main():
             if force:
                 files_changed = svn.revert() or files_changed
             else:
-                module.fail_json(msg="ERROR: modified files exist in the repository.")
+                module.fail_json(
+                    msg="ERROR: modified files exist in the repository.")
         files_changed = svn.update() or files_changed
     elif in_place:
         before = None
@@ -313,7 +319,8 @@ def main():
         if local_mods and force:
             svn.revert()
     else:
-        module.fail_json(msg="ERROR: %s folder already exists, but its not a subversion repository." % (dest,))
+        module.fail_json(
+            msg="ERROR: %s folder already exists, but its not a subversion repository." % (dest,))
 
     if export:
         module.exit_json(changed=True)

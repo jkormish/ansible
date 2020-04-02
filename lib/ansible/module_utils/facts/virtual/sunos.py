@@ -85,7 +85,8 @@ class SunOSVirtual(Virtual):
                                 if arg[1] == 'true':
                                     hostfeatures.append(arg[0])
                             if len(hostfeatures) > 0:
-                                virtual_facts['virtualization_role'] = 'host (' + ','.join(hostfeatures) + ')'
+                                virtual_facts['virtualization_role'] = 'host (' + ','.join(
+                                    hostfeatures) + ')'
                 except ValueError:
                     pass
 

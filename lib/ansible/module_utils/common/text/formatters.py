@@ -54,13 +54,16 @@ def human_to_bytes(number, default_unit=None, isbits=False):
         The function expects 'b' (lowercase) as a bit identifier, e.g. 'Mb'/'Kb'/etc.
         if 'MB'/'KB'/... is passed, the ValueError will be rased.
     """
-    m = re.search(r'^\s*(\d*\.?\d*)\s*([A-Za-z]+)?', str(number), flags=re.IGNORECASE)
+    m = re.search(r'^\s*(\d*\.?\d*)\s*([A-Za-z]+)?',
+                  str(number), flags=re.IGNORECASE)
     if m is None:
-        raise ValueError("human_to_bytes() can't interpret following string: %s" % str(number))
+        raise ValueError(
+            "human_to_bytes() can't interpret following string: %s" % str(number))
     try:
         num = float(m.group(1))
     except Exception:
-        raise ValueError("human_to_bytes() can't interpret following number: %s (original input string: %s)" % (m.group(1), number))
+        raise ValueError("human_to_bytes() can't interpret following number: %s (original input string: %s)" % (
+            m.group(1), number))
 
     unit = m.group(2)
     if unit is None:
@@ -73,7 +76,8 @@ def human_to_bytes(number, default_unit=None, isbits=False):
     try:
         limit = SIZE_RANGES[range_key]
     except Exception:
-        raise ValueError("human_to_bytes() failed to convert %s (unit = %s). The suffix must be one of %s" % (number, unit, ", ".join(SIZE_RANGES.keys())))
+        raise ValueError("human_to_bytes() failed to convert %s (unit = %s). The suffix must be one of %s" % (
+            number, unit, ", ".join(SIZE_RANGES.keys())))
 
     # default value
     unit_class = 'B'
@@ -84,14 +88,16 @@ def human_to_bytes(number, default_unit=None, isbits=False):
         unit_class_name = 'bit'
     # check unit value if more than one character (KB, MB)
     if len(unit) > 1:
-        expect_message = 'expect %s%s or %s' % (range_key, unit_class, range_key)
+        expect_message = 'expect %s%s or %s' % (
+            range_key, unit_class, range_key)
         if range_key == 'B':
             expect_message = 'expect %s or %s' % (unit_class, unit_class_name)
 
         if unit_class_name in unit.lower():
             pass
         elif unit[1] != unit_class:
-            raise ValueError("human_to_bytes() failed to convert %s. Value is not a valid string (%s)" % (number, expect_message))
+            raise ValueError("human_to_bytes() failed to convert %s. Value is not a valid string (%s)" % (
+                number, expect_message))
 
     return int(round(num * limit))
 

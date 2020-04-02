@@ -48,8 +48,10 @@ class DateTimeFactCollector(BaseFactCollector):
             date_time_facts['epoch'] = str(int(time.time()))
         date_time_facts['date'] = now.strftime('%Y-%m-%d')
         date_time_facts['time'] = now.strftime('%H:%M:%S')
-        date_time_facts['iso8601_micro'] = now.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        date_time_facts['iso8601'] = now.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        date_time_facts['iso8601_micro'] = now.utcnow().strftime(
+            "%Y-%m-%dT%H:%M:%S.%fZ")
+        date_time_facts['iso8601'] = now.utcnow().strftime(
+            "%Y-%m-%dT%H:%M:%SZ")
         date_time_facts['iso8601_basic'] = now.strftime("%Y%m%dT%H%M%S%f")
         date_time_facts['iso8601_basic_short'] = now.strftime("%Y%m%dT%H%M%S")
         date_time_facts['tz'] = time.strftime("%Z")

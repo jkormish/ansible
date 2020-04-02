@@ -22,11 +22,13 @@ def _preprocess_unsafe_encode(value):
     Used in ``AnsibleJSONEncoder.iterencode``
     """
     if getattr(value, '__UNSAFE__', False) and not getattr(value, '__ENCRYPTED__', False):
-        value = {'__ansible_unsafe': to_text(value, errors='surrogate_or_strict', nonstring='strict')}
+        value = {'__ansible_unsafe': to_text(
+            value, errors='surrogate_or_strict', nonstring='strict')}
     elif is_sequence(value):
         value = [_preprocess_unsafe_encode(v) for v in value]
     elif isinstance(value, Mapping):
-        value = dict((k, _preprocess_unsafe_encode(v)) for k, v in value.items())
+        value = dict((k, _preprocess_unsafe_encode(v))
+                     for k, v in value.items())
 
     return value
 
@@ -44,10 +46,12 @@ class AnsibleJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if getattr(o, '__ENCRYPTED__', False):
             # vault object
-            value = {'__ansible_vault': to_text(o._ciphertext, errors='surrogate_or_strict', nonstring='strict')}
+            value = {'__ansible_vault': to_text(
+                o._ciphertext, errors='surrogate_or_strict', nonstring='strict')}
         elif getattr(o, '__UNSAFE__', False):
             # unsafe object, this will never be triggered, see ``AnsibleJSONEncoder.iterencode``
-            value = {'__ansible_unsafe': to_text(o, errors='surrogate_or_strict', nonstring='strict')}
+            value = {'__ansible_unsafe': to_text(
+                o, errors='surrogate_or_strict', nonstring='strict')}
         elif isinstance(o, Mapping):
             # hostvars and other objects
             value = dict(o)

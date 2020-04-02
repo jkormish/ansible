@@ -5,6 +5,8 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -87,9 +89,6 @@ EXAMPLES = r'''
     name: tzdata
 '''
 
-from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import AnsibleModule
-
 
 def get_selections(module, pkg):
     cmd = [module.get_bin_path('debconf-show', True), pkg]
@@ -128,7 +127,8 @@ def main():
         argument_spec=dict(
             name=dict(type='str', required=True, aliases=['pkg']),
             question=dict(type='str', aliases=['selection', 'setting']),
-            vtype=dict(type='str', choices=['boolean', 'error', 'multiselect', 'note', 'password', 'seen', 'select', 'string', 'text', 'title']),
+            vtype=dict(type='str', choices=['boolean', 'error', 'multiselect',
+                                            'note', 'password', 'seen', 'select', 'string', 'text', 'title']),
             value=dict(type='str', aliases=['answer']),
             unseen=dict(type='bool'),
         ),
@@ -150,7 +150,8 @@ def main():
 
     if question is not None:
         if vtype is None or value is None:
-            module.fail_json(msg="when supplying a question you must supply a valid vtype and value")
+            module.fail_json(
+                msg="when supplying a question you must supply a valid vtype and value")
 
         # if question doesn't exist, value cannot match
         if question not in prev:
@@ -169,7 +170,8 @@ def main():
 
     if changed:
         if not module.check_mode:
-            rc, msg, e = set_selection(module, pkg, question, vtype, value, unseen)
+            rc, msg, e = set_selection(
+                module, pkg, question, vtype, value, unseen)
             if rc:
                 module.fail_json(msg=e)
 
@@ -185,7 +187,8 @@ def main():
         else:
             diff_dict = {}
 
-        module.exit_json(changed=changed, msg=msg, current=curr, previous=prev, diff=diff_dict)
+        module.exit_json(changed=changed, msg=msg, current=curr,
+                         previous=prev, diff=diff_dict)
 
     module.exit_json(changed=changed, msg=msg, current=prev)
 

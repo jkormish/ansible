@@ -53,7 +53,8 @@ class PlatformFactCollector(BaseFactCollector):
         platform_facts['hostname'] = platform.node().split('.')[0]
         platform_facts['nodename'] = platform.node()
 
-        platform_facts['domain'] = '.'.join(platform_facts['fqdn'].split('.')[1:])
+        platform_facts['domain'] = '.'.join(
+            platform_facts['fqdn'].split('.')[1:])
 
         arch_bits = platform.architecture()[0]
 
@@ -78,7 +79,8 @@ class PlatformFactCollector(BaseFactCollector):
             # fall back to bootinfo if needed
             getconf_bin = module.get_bin_path('getconf')
             if getconf_bin:
-                rc, out, err = module.run_command([getconf_bin, 'MACHINE_ARCHITECTURE'])
+                rc, out, err = module.run_command(
+                    [getconf_bin, 'MACHINE_ARCHITECTURE'])
                 data = out.splitlines()
                 platform_facts['architecture'] = data[0]
             else:
@@ -89,7 +91,8 @@ class PlatformFactCollector(BaseFactCollector):
         elif platform_facts['system'] == 'OpenBSD':
             platform_facts['architecture'] = platform.uname()[5]
 
-        machine_id = get_file_content("/var/lib/dbus/machine-id") or get_file_content("/etc/machine-id")
+        machine_id = get_file_content(
+            "/var/lib/dbus/machine-id") or get_file_content("/etc/machine-id")
         if machine_id:
             machine_id = machine_id.splitlines()[0]
             platform_facts["machine_id"] = machine_id

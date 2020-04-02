@@ -5,6 +5,17 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils.six import PY3
+from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import AnsibleModule, is_executable, missing_required_lib
+from distutils.version import LooseVersion
+import traceback
+import shlex
+import operator
+import tempfile
+import sys
+import re
+import os
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -257,14 +268,6 @@ virtualenv:
   sample: "/tmp/virtualenv"
 '''
 
-import os
-import re
-import sys
-import tempfile
-import operator
-import shlex
-import traceback
-from distutils.version import LooseVersion
 
 SETUPTOOLS_IMP_ERR = None
 try:
@@ -274,10 +277,6 @@ try:
 except ImportError:
     HAS_SETUPTOOLS = False
     SETUPTOOLS_IMP_ERR = traceback.format_exc()
-
-from ansible.module_utils.basic import AnsibleModule, is_executable, missing_required_lib
-from ansible.module_utils._text import to_native
-from ansible.module_utils.six import PY3
 
 
 #: Python one-liners to be run at the command line that will determine the
@@ -343,7 +342,8 @@ def _get_cmd_options(module, cmd):
     thiscmd = cmd + " --help"
     rc, stdout, stderr = module.run_command(thiscmd)
     if rc != 0:
-        module.fail_json(msg="Could not get output from %s: %s" % (thiscmd, stdout + stderr))
+        module.fail_json(msg="Could not get output from %s: %s" %
+                         (thiscmd, stdout + stderr))
 
     words = stdout.strip().split()
     cmd_options = [x for x in words if x.startswith('--')]
@@ -355,7 +355,8 @@ def _get_packages(module, pip, chdir):
     # Try 'pip list' command first.
     command = '%s list --format=freeze' % pip
     lang_env = {'LANG': 'C', 'LC_ALL': 'C', 'LC_MESSAGES': 'C'}
-    rc, out, err = module.run_command(command, cwd=chdir, environ_update=lang_env)
+    rc, out, err = module.run_command(
+        command, cwd=chdir, environ_update=lang_env)
 
     # If there was an error (pip version too old) then use 'pip freeze'.
     if rc != 0:
@@ -459,7 +460,8 @@ def _get_package_info(module, package, env=None):
     if python_bin is None:
         formatted_dep = None
     else:
-        rc, out, err = module.run_command([python_bin, '-c', _SPECIAL_PACKAGE_CHECKERS[package]])
+        rc, out, err = module.run_command(
+            [python_bin, '-c', _SPECIAL_PACKAGE_CHECKERS[package]])
         if rc:
             formatted_dep = None
         else:
@@ -540,7 +542,8 @@ class Package:
                 self.package_name = "setuptools"
                 self._requirement.project_name = "setuptools"
             else:
-                self.package_name = Package.canonicalize_name(self._requirement.project_name)
+                self.package_name = Package.canonicalize_name(
+                    self._requirement.project_name)
             self._plain_package = True
         except ValueError as e:
             pass
@@ -585,7 +588,8 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='present', choices=state_map.keys()),
+            state=dict(type='str', default='present',
+                       choices=state_map.keys()),
             name=dict(type='list', elements='str'),
             version=dict(type='str'),
             requirements=dict(type='str'),
@@ -600,7 +604,8 @@ def main():
             umask=dict(type='str'),
         ),
         required_one_of=[['name', 'requirements']],
-        mutually_exclusive=[['name', 'requirements'], ['executable', 'virtualenv']],
+        mutually_exclusive=[['name', 'requirements'],
+                            ['executable', 'virtualenv']],
         supports_check_mode=True,
     )
 
@@ -720,7 +725,8 @@ def main():
 
             changed = False
             if name:
-                pkg_list = [p for p in out.split('\n') if not p.startswith('You are using') and not p.startswith('You should consider') and p]
+                pkg_list = [p for p in out.split('\n') if not p.startswith(
+                    'You are using') and not p.startswith('You should consider') and p]
 
                 if pkg_cmd.endswith(' freeze') and ('pip' in name or 'setuptools' in name):
                     # Older versions of pip (pre-1.3) do not have pip list.
@@ -734,17 +740,20 @@ def main():
                                 out += '%s\n' % formatted_dep
 
                 for package in packages:
-                    is_present = _is_present(module, package, pkg_list, pkg_cmd)
+                    is_present = _is_present(
+                        module, package, pkg_list, pkg_cmd)
                     if (state == 'present' and not is_present) or (state == 'absent' and is_present):
                         changed = True
                         break
-            module.exit_json(changed=changed, cmd=pkg_cmd, stdout=out, stderr=err)
+            module.exit_json(changed=changed, cmd=pkg_cmd,
+                             stdout=out, stderr=err)
 
         out_freeze_before = None
         if requirements or has_vcs:
             _, out_freeze_before, _ = _get_packages(module, pip, chdir)
 
-        rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=chdir)
+        rc, out_pip, err_pip = module.run_command(
+            cmd, path_prefix=path_prefix, cwd=chdir)
         out += out_pip
         err += err_pip
         if rc == 1 and state == 'absent' and \

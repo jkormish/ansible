@@ -63,9 +63,11 @@ class AIXNetwork(GenericBsdIfconfigNetwork):
         uname_err = None
         uname_path = self.module.get_bin_path('uname')
         if uname_path:
-            uname_rc, uname_out, uname_err = self.module.run_command([uname_path, '-W'])
+            uname_rc, uname_out, uname_err = self.module.run_command(
+                [uname_path, '-W'])
 
-        rc, out, err = self.module.run_command([ifconfig_path, ifconfig_options])
+        rc, out, err = self.module.run_command(
+            [ifconfig_path, ifconfig_options])
 
         for line in out.splitlines():
 
@@ -102,7 +104,8 @@ class AIXNetwork(GenericBsdIfconfigNetwork):
                 if current_if['macaddress'] == 'unknown' and re.match('^en', current_if['device']):
                     entstat_path = self.module.get_bin_path('entstat')
                     if entstat_path:
-                        rc, out, err = self.module.run_command([entstat_path, current_if['device']])
+                        rc, out, err = self.module.run_command(
+                            [entstat_path, current_if['device']])
                         if rc != 0:
                             break
                         for line in out.splitlines():
@@ -120,7 +123,8 @@ class AIXNetwork(GenericBsdIfconfigNetwork):
                 if 'mtu' not in current_if:
                     lsattr_path = self.module.get_bin_path('lsattr')
                     if lsattr_path:
-                        rc, out, err = self.module.run_command([lsattr_path, '-El', current_if['device']])
+                        rc, out, err = self.module.run_command(
+                            [lsattr_path, '-El', current_if['device']])
                         if rc != 0:
                             break
                         for line in out.splitlines():
@@ -133,7 +137,8 @@ class AIXNetwork(GenericBsdIfconfigNetwork):
     # AIX 'ifconfig -a' does not inform about MTU, so remove current_if['mtu'] here
     def parse_interface_line(self, words):
         device = words[0][0:-1]
-        current_if = {'device': device, 'ipv4': [], 'ipv6': [], 'type': 'unknown'}
+        current_if = {'device': device, 'ipv4': [],
+                      'ipv6': [], 'type': 'unknown'}
         current_if['flags'] = self.get_options(words[1])
         current_if['macaddress'] = 'unknown'    # will be overwritten later
         return current_if

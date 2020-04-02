@@ -123,7 +123,8 @@ class PkgMgrFactCollector(BaseFactCollector):
         # installed or available to the distro, the ansible_fact entry should be
         # the default package manager officially supported by the distro.
         if collected_facts['ansible_os_family'] == "RedHat":
-            pkg_mgr_name = self._check_rh_versions(pkg_mgr_name, collected_facts)
+            pkg_mgr_name = self._check_rh_versions(
+                pkg_mgr_name, collected_facts)
         elif collected_facts['ansible_os_family'] == 'Debian' and pkg_mgr_name != 'apt':
             # It's possible to install yum, dnf, zypper, rpm, etc inside of
             # Debian. Doing so does not mean the system wants to use them.

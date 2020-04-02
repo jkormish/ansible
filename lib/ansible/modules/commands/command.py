@@ -6,6 +6,13 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils.common.collections import is_iterable
+from ansible.module_utils._text import to_native, to_bytes, to_text
+from ansible.module_utils.basic import AnsibleModule
+import shlex
+import os
+import glob
+import datetime
 __metaclass__ = type
 
 
@@ -203,15 +210,6 @@ stderr_lines:
   sample: [u'ls cannot access foo: No such file or directory', u'ls …']
 '''
 
-import datetime
-import glob
-import os
-import shlex
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native, to_bytes, to_text
-from ansible.module_utils.common.collections import is_iterable
-
 
 def check_command(module, commandline):
     arguments = {'chown': 'owner', 'chmod': 'mode', 'chgrp': 'group',
@@ -246,7 +244,8 @@ def check_command(module, commandline):
         module.warn(msg.format(**substitutions))
 
     if command in become:
-        module.warn("Consider using 'become', 'become_method', and 'become_user' rather than running %s" % (command,))
+        module.warn(
+            "Consider using 'become', 'become_method', and 'become_user' rather than running %s" % (command,))
 
 
 def main():
@@ -283,14 +282,16 @@ def main():
     strip = module.params['strip_empty_ends']
 
     if not shell and executable:
-        module.warn("As of Ansible 2.4, the parameter 'executable' is no longer supported with the 'command' module. Not using '%s'." % executable)
+        module.warn(
+            "As of Ansible 2.4, the parameter 'executable' is no longer supported with the 'command' module. Not using '%s'." % executable)
         executable = None
 
     if (not args or args.strip() == '') and not argv:
         module.fail_json(rc=256, msg="no command given")
 
     if args and argv:
-        module.fail_json(rc=256, msg="only command or argv can be given, not both")
+        module.fail_json(
+            rc=256, msg="only command or argv can be given, not both")
 
     if not shell and args:
         args = shlex.split(args)
@@ -299,18 +300,22 @@ def main():
 
     # All args must be strings
     if is_iterable(args, include_strings=False):
-        args = [to_native(arg, errors='surrogate_or_strict', nonstring='simplerepr') for arg in args]
+        args = [to_native(arg, errors='surrogate_or_strict',
+                          nonstring='simplerepr') for arg in args]
 
     if chdir:
         try:
-            chdir = to_bytes(os.path.abspath(chdir), errors='surrogate_or_strict')
+            chdir = to_bytes(os.path.abspath(chdir),
+                             errors='surrogate_or_strict')
         except ValueError as e:
-            module.fail_json(msg='Unable to use supplied chdir: %s' % to_text(e))
+            module.fail_json(
+                msg='Unable to use supplied chdir: %s' % to_text(e))
 
         try:
             os.chdir(chdir)
         except (IOError, OSError) as e:
-            module.fail_json(msg='Unable to change directory before execution: %s' % to_text(e))
+            module.fail_json(
+                msg='Unable to change directory before execution: %s' % to_text(e))
 
     if creates:
         # do not run the command if the line contains creates=filename
@@ -342,7 +347,8 @@ def main():
     startd = datetime.datetime.now()
 
     if not module.check_mode:
-        rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None, data=stdin, binary_data=(not stdin_add_newline))
+        rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell,
+                                          encoding=None, data=stdin, binary_data=(not stdin_add_newline))
     elif creates or removes:
         rc = 0
         out = err = b'Command would have run if not in check mode'

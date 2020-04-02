@@ -4,6 +4,13 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils._text import to_bytes
+from ansible.module_utils.basic import AnsibleModule
+import stat
+import pwd
+import os
+import grp
+import errno
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -356,15 +363,8 @@ stat:
             version_added: 2.3
 '''
 
-import errno
-import grp
-import os
-import pwd
-import stat
 
 # import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes
 
 
 def format_output(module, path, st):
@@ -436,10 +436,13 @@ def main():
             follow=dict(type='bool', default=False),
             get_md5=dict(type='bool', default=False),
             get_checksum=dict(type='bool', default=True),
-            get_mime=dict(type='bool', default=True, aliases=['mime', 'mime_type', 'mime-type']),
-            get_attributes=dict(type='bool', default=True, aliases=['attr', 'attributes']),
+            get_mime=dict(type='bool', default=True, aliases=[
+                          'mime', 'mime_type', 'mime-type']),
+            get_attributes=dict(type='bool', default=True,
+                                aliases=['attr', 'attributes']),
             checksum_algorithm=dict(type='str', default='sha1',
-                                    choices=['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512'],
+                                    choices=['md5', 'sha1', 'sha224',
+                                             'sha256', 'sha384', 'sha512'],
                                     aliases=['checksum', 'checksum_algo']),
         ),
         supports_check_mode=True,
@@ -506,7 +509,8 @@ def main():
                 output['md5'] = None
 
         if get_checksum:
-            output['checksum'] = module.digest_from_file(b_path, checksum_algorithm)
+            output['checksum'] = module.digest_from_file(
+                b_path, checksum_algorithm)
 
     # try to get mime data if requested
     if get_mime:

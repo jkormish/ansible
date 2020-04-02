@@ -5,6 +5,20 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils.urls import fetch_url, url_argument_spec
+from ansible.module_utils.common._collections_compat import Mapping, Sequence
+from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
+from ansible.module_utils.six import PY2, iteritems, string_types
+from ansible.module_utils.basic import AnsibleModule
+import tempfile
+import sys
+import shutil
+import re
+import os
+import json
+import datetime
+import cgi
 __metaclass__ = type
 
 
@@ -357,21 +371,6 @@ url:
   sample: https://www.ansible.com/
 '''
 
-import cgi
-import datetime
-import json
-import os
-import re
-import shutil
-import sys
-import tempfile
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import PY2, iteritems, string_types
-from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import Mapping, Sequence
-from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 JSON_CANDIDATES = ('text', 'json', 'javascript')
 
@@ -389,7 +388,8 @@ def write_file(module, url, dest, content, resp):
         f.write(content)
     except Exception as e:
         os.remove(tmpsrc)
-        msg = format_message("Failed to create temporary content file: %s" % to_native(e), resp)
+        msg = format_message(
+            "Failed to create temporary content file: %s" % to_native(e), resp)
         module.fail_json(msg=msg, **resp)
     f.close()
 
@@ -422,7 +422,8 @@ def write_file(module, url, dest, content, resp):
     else:
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
-            msg = format_message("Destination dir '%s' not writable" % os.path.dirname(dest), resp)
+            msg = format_message(
+                "Destination dir '%s' not writable" % os.path.dirname(dest), resp)
             module.fail_json(msg=msg, **resp)
 
     if checksum_src != checksum_dest:
@@ -430,7 +431,8 @@ def write_file(module, url, dest, content, resp):
             shutil.copyfile(tmpsrc, dest)
         except Exception as e:
             os.remove(tmpsrc)
-            msg = format_message("failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)), resp)
+            msg = format_message("failed to copy %s to %s: %s" %
+                                 (tmpsrc, dest, to_native(e)), resp)
             module.fail_json(msg=msg, **resp)
 
     os.remove(tmpsrc)
@@ -512,7 +514,8 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
             })
             data = open(src, 'rb')
         except OSError:
-            module.fail_json(msg='Unable to open source file %s' % src, elapsed=0)
+            module.fail_json(msg='Unable to open source file %s' %
+                             src, elapsed=0)
     else:
         data = body
 
@@ -536,13 +539,15 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
             dest = os.path.join(dest, url_filename(url))
         # if destination file already exist, only download if file newer
         if os.path.exists(dest):
-            kwargs['last_mod_time'] = datetime.datetime.utcfromtimestamp(os.path.getmtime(dest))
+            kwargs['last_mod_time'] = datetime.datetime.utcfromtimestamp(
+                os.path.getmtime(dest))
 
         # Reset follow_redirects back to the stashed value
         module.params['follow_redirects'] = follow_redirects
 
     resp, info = fetch_url(module, url, data=data, headers=headers,
-                           method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
+                           method=method, timeout=socket_timeout, unix_socket=module.params[
+                               'unix_socket'],
                            **kwargs)
 
     try:
@@ -573,11 +578,13 @@ def main():
         url_username=dict(type='str', aliases=['user']),
         url_password=dict(type='str', aliases=['password'], no_log=True),
         body=dict(type='raw'),
-        body_format=dict(type='str', default='raw', choices=['form-urlencoded', 'json', 'raw']),
+        body_format=dict(type='str', default='raw', choices=[
+                         'form-urlencoded', 'json', 'raw']),
         src=dict(type='path'),
         method=dict(type='str', default='GET'),
         return_content=dict(type='bool', default=False),
-        follow_redirects=dict(type='str', default='safe', choices=['all', 'no', 'none', 'safe', 'urllib2', 'yes']),
+        follow_redirects=dict(type='str', default='safe', choices=[
+                              'all', 'no', 'none', 'safe', 'urllib2', 'yes']),
         creates=dict(type='path'),
         removes=dict(type='path'),
         status_code=dict(type='list', default=[200]),
@@ -594,7 +601,8 @@ def main():
     )
 
     if module.params.get('thirsty'):
-        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead', version='2.13')
+        module.deprecate(
+            'The alias "thirsty" has been deprecated and will be removed, use "force" instead', version='2.13')
 
     url = module.params['url']
     body = module.params['body']
@@ -610,7 +618,8 @@ def main():
     dict_headers = module.params['headers']
 
     if not re.match('^[A-Z]+$', method):
-        module.fail_json(msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
+        module.fail_json(
+            msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
 
     if body_format == 'json':
         # Encode the body unless its a string, then assume it is pre-formatted JSON
@@ -623,7 +632,8 @@ def main():
             try:
                 body = form_urlencoded(body)
             except ValueError as e:
-                module.fail_json(msg='failed to parse body as form_urlencoded: %s' % to_native(e), elapsed=0)
+                module.fail_json(
+                    msg='failed to parse body as form_urlencoded: %s' % to_native(e), elapsed=0)
         if 'content-type' not in [header.lower() for header in dict_headers]:
             dict_headers['Content-Type'] = 'application/x-www-form-urlencoded'
 
@@ -632,14 +642,16 @@ def main():
         # and the filename already exists.  This allows idempotence
         # of uri executions.
         if os.path.exists(creates):
-            module.exit_json(stdout="skipped, since '%s' exists" % creates, changed=False)
+            module.exit_json(stdout="skipped, since '%s' exists" %
+                             creates, changed=False)
 
     if removes is not None:
         # do not run the command if the line contains removes=filename
         # and the filename does not exist.  This allows idempotence
         # of uri executions.
         if not os.path.exists(removes):
-            module.exit_json(stdout="skipped, since '%s' does not exist" % removes, changed=False)
+            module.exit_json(
+                stdout="skipped, since '%s' does not exist" % removes, changed=False)
 
     # Make the request
     start = datetime.datetime.utcnow()
@@ -656,8 +668,10 @@ def main():
             # allow file attribute changes
             resp['changed'] = True
             module.params['path'] = dest
-            file_args = module.load_file_common_arguments(module.params, path=dest)
-            resp['changed'] = module.set_fs_attributes_if_different(file_args, resp['changed'])
+            file_args = module.load_file_common_arguments(
+                module.params, path=dest)
+            resp['changed'] = module.set_fs_attributes_if_different(
+                file_args, resp['changed'])
         resp['path'] = dest
 
     # Transmogrify the headers, replacing '-' with '_', since variables don't
@@ -690,13 +704,15 @@ def main():
             content_type = content_types[0]
             if len(content_types) > 1:
                 module.warn(
-                    'Received multiple conflicting Content-Type values (%s), using %s' % (', '.join(content_types), content_type)
+                    'Received multiple conflicting Content-Type values (%s), using %s' % (
+                        ', '.join(content_types), content_type)
                 )
         if charsets:
             content_encoding = charsets[0]
             if len(charsets) > 1:
                 module.warn(
-                    'Received multiple conflicting charset values (%s), using %s' % (', '.join(charsets), content_encoding)
+                    'Received multiple conflicting charset values (%s), using %s' % (
+                        ', '.join(charsets), content_encoding)
                 )
 
         u_content = to_text(content, encoding=content_encoding)
@@ -711,7 +727,8 @@ def main():
         u_content = to_text(content, encoding=content_encoding)
 
     if resp['status'] not in status_code:
-        uresp['msg'] = 'Status code was %s and not %s: %s' % (resp['status'], status_code, uresp.get('msg', ''))
+        uresp['msg'] = 'Status code was %s and not %s: %s' % (
+            resp['status'], status_code, uresp.get('msg', ''))
         module.fail_json(content=u_content, **uresp)
     elif return_content:
         module.exit_json(content=u_content, **uresp)

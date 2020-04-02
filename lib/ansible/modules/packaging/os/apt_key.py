@@ -7,6 +7,10 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import AnsibleModule
+from traceback import format_exc
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -111,11 +115,6 @@ EXAMPLES = '''
 
 
 # FIXME: standardize into module_common
-from traceback import format_exc
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-from ansible.module_utils.urls import fetch_url
 
 
 apt_key_bin = None
@@ -159,7 +158,8 @@ def parse_key_id(key_id):
 
     key_id_len = len(key_id)
     if (key_id_len != 8 and key_id_len != 16) and key_id_len <= 16:
-        raise ValueError('key_id must be 8, 16, or 16+ hexadecimal characters in length')
+        raise ValueError(
+            'key_id must be 8, 16, or 16+ hexadecimal characters in length')
 
     short_key_id = key_id[-8:]
 
@@ -172,7 +172,8 @@ def parse_key_id(key_id):
 
 def all_keys(module, keyring, short_format):
     if keyring:
-        cmd = "%s --keyring %s adv --list-public-keys --keyid-format=long" % (apt_key_bin, keyring)
+        cmd = "%s --keyring %s adv --list-public-keys --keyid-format=long" % (
+            apt_key_bin, keyring)
     else:
         cmd = "%s adv --list-public-keys --keyid-format=long" % apt_key_bin
     (rc, out, err) = module.run_command(cmd)
@@ -209,18 +210,22 @@ def download_key(module, url):
     try:
         rsp, info = fetch_url(module, url)
         if info['status'] != 200:
-            module.fail_json(msg="Failed to download key at %s: %s" % (url, info['msg']))
+            module.fail_json(
+                msg="Failed to download key at %s: %s" % (url, info['msg']))
 
         return rsp.read()
     except Exception:
-        module.fail_json(msg="error getting key id from url: %s" % url, traceback=format_exc())
+        module.fail_json(msg="error getting key id from url: %s" %
+                         url, traceback=format_exc())
 
 
 def import_key(module, keyring, keyserver, key_id):
     if keyring:
-        cmd = "%s --keyring %s adv --no-tty --keyserver %s --recv %s" % (apt_key_bin, keyring, keyserver, key_id)
+        cmd = "%s --keyring %s adv --no-tty --keyserver %s --recv %s" % (
+            apt_key_bin, keyring, keyserver, key_id)
     else:
-        cmd = "%s adv --no-tty --keyserver %s --recv %s" % (apt_key_bin, keyserver, key_id)
+        cmd = "%s adv --no-tty --keyserver %s --recv %s" % (
+            apt_key_bin, keyserver, key_id)
     for retry in range(5):
         lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
         (rc, out, err) = module.run_command(cmd, environ_update=lang_env)
@@ -232,7 +237,8 @@ def import_key(module, keyring, keyserver, key_id):
             msg = 'Key %s not found on keyserver %s' % (key_id, keyserver)
             module.fail_json(cmd=cmd, msg=msg)
         else:
-            msg = "Error fetching key %s from keyserver: %s" % (key_id, keyserver)
+            msg = "Error fetching key %s from keyserver: %s" % (
+                key_id, keyserver)
             module.fail_json(cmd=cmd, msg=msg, rc=rc, stdout=out, stderr=err)
     return True
 
@@ -243,7 +249,8 @@ def add_key(module, keyfile, keyring, data=None):
             cmd = "%s --keyring %s add -" % (apt_key_bin, keyring)
         else:
             cmd = "%s add -" % apt_key_bin
-        (rc, out, err) = module.run_command(cmd, data=data, check_rc=True, binary_data=True)
+        (rc, out, err) = module.run_command(
+            cmd, data=data, check_rc=True, binary_data=True)
     else:
         if keyring:
             cmd = "%s --keyring %s add %s" % (apt_key_bin, keyring, keyfile)
@@ -274,7 +281,8 @@ def main():
             keyring=dict(type='path'),
             validate_certs=dict(type='bool', default=True),
             keyserver=dict(type='str'),
-            state=dict(type='str', default='present', choices=['absent', 'present']),
+            state=dict(type='str', default='present',
+                       choices=['absent', 'present']),
         ),
         supports_check_mode=True,
         mutually_exclusive=(('data', 'filename', 'keyserver', 'url'),),
@@ -330,7 +338,8 @@ def main():
                 changed = True
 
             if fingerprint and fingerprint not in keys2:
-                module.fail_json(msg="key does not seem to have been added", id=key_id)
+                module.fail_json(
+                    msg="key does not seem to have been added", id=key_id)
             module.exit_json(changed=changed)
 
     elif state == 'absent':

@@ -31,11 +31,13 @@ class NetBSDVirtual(Virtual, VirtualSysctlDetectionMixin):
         virtual_facts['virtualization_type'] = ''
         virtual_facts['virtualization_role'] = ''
 
-        virtual_product_facts = self.detect_virt_product('machdep.dmi.system-product')
+        virtual_product_facts = self.detect_virt_product(
+            'machdep.dmi.system-product')
         virtual_facts.update(virtual_product_facts)
 
         if virtual_facts['virtualization_type'] == '':
-            virtual_vendor_facts = self.detect_virt_vendor('machdep.dmi.system-vendor')
+            virtual_vendor_facts = self.detect_virt_vendor(
+                'machdep.dmi.system-vendor')
             virtual_facts.update(virtual_vendor_facts)
 
         if os.path.exists('/dev/xencons'):

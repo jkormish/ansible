@@ -42,7 +42,8 @@ class SunOSHardware(Hardware):
         # FIXME: could pass to run_command(environ_update), but it also tweaks the env
         #        of the parent process instead of altering an env provided to Popen()
         # Use C locale for hardware collection helpers to avoid locale specific number formatting (#24542)
-        self.module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_NUMERIC': 'C'}
+        self.module.run_command_environ_update = {
+            'LANG': 'C', 'LC_ALL': 'C', 'LC_NUMERIC': 'C'}
 
         cpu_facts = self.get_cpu_facts()
         memory_facts = self.get_memory_facts()
@@ -113,7 +114,8 @@ class SunOSHardware(Hardware):
         # these processors have: sockets -> cores -> threads/virtual CPU.
         if len(sockets) > 0:
             cpu_facts['processor_count'] = len(sockets)
-            cpu_facts['processor_cores'] = reduce(lambda x, y: x + y, sockets.values())
+            cpu_facts['processor_cores'] = reduce(
+                lambda x, y: x + y, sockets.values())
         else:
             cpu_facts['processor_cores'] = 'NA'
             cpu_facts['processor_count'] = len(cpu_facts['processor'])
@@ -174,7 +176,8 @@ class SunOSHardware(Hardware):
         rc, platform, err = self.module.run_command('/usr/bin/uname -i')
         platform_sbin = '/usr/platform/' + platform.rstrip() + '/sbin'
 
-        prtdiag_path = self.module.get_bin_path("prtdiag", opt_dirs=[platform_sbin])
+        prtdiag_path = self.module.get_bin_path(
+            "prtdiag", opt_dirs=[platform_sbin])
         rc, out, err = self.module.run_command(prtdiag_path)
         """
         rc returns 1
@@ -247,9 +250,11 @@ class SunOSHardware(Hardware):
         if rc != 0:
             return device_facts
 
-        sd_instances = frozenset(line.split(':')[1] for line in out.split('\n') if line.startswith('sderr'))
+        sd_instances = frozenset(line.split(':')[1] for line in out.split(
+            '\n') if line.startswith('sderr'))
         for instance in sd_instances:
-            lines = (line for line in out.split('\n') if ':' in line and line.split(':')[1] == instance)
+            lines = (line for line in out.split('\n')
+                     if ':' in line and line.split(':')[1] == instance)
             for line in lines:
                 text, value = line.split('\t')
                 stat = text.split(':')[3]
@@ -269,13 +274,15 @@ class SunOSHardware(Hardware):
         uptime_facts = {}
         # sample kstat output:
         # unix:0:system_misc:boot_time    1548249689
-        rc, out, err = self.module.run_command('/usr/bin/kstat -p unix:0:system_misc:boot_time')
+        rc, out, err = self.module.run_command(
+            '/usr/bin/kstat -p unix:0:system_misc:boot_time')
 
         if rc != 0:
             return
 
         # uptime = $current_time - $boot_time
-        uptime_facts['uptime_seconds'] = int(time.time() - int(out.split('\t')[1]))
+        uptime_facts['uptime_seconds'] = int(
+            time.time() - int(out.split('\t')[1]))
 
         return uptime_facts
 

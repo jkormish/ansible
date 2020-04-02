@@ -66,7 +66,8 @@ class SelinuxFactCollector(BaseFactCollector):
             try:
                 (rc, configmode) = selinux.selinux_getenforcemode()
                 if rc == 0:
-                    selinux_facts['config_mode'] = SELINUX_MODE_DICT.get(configmode, 'unknown')
+                    selinux_facts['config_mode'] = SELINUX_MODE_DICT.get(
+                        configmode, 'unknown')
                 else:
                     selinux_facts['config_mode'] = 'unknown'
             except (AttributeError, OSError):

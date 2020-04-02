@@ -5,6 +5,9 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils.basic import AnsibleModule
+import os
+import base64
 __metaclass__ = type
 
 
@@ -59,11 +62,6 @@ EXAMPLES = r'''
 # $ echo MjE3OQo= | base64 -d
 # 2179
 '''
-
-import base64
-import os
-
-from ansible.module_utils.basic import AnsibleModule
 
 
 def main():

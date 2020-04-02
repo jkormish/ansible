@@ -36,7 +36,8 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
     if name:  # when deserializing we might not have name yet
         invalid_chars = C.INVALID_VARIABLE_NAMES.findall(name)
         if invalid_chars:
-            msg = 'invalid character(s) "%s" in group name (%s)' % (to_text(set(invalid_chars)), to_text(name))
+            msg = 'invalid character(s) "%s" in group name (%s)' % (
+                to_text(set(invalid_chars)), to_text(name))
             if C.TRANSFORM_INVALID_GROUP_CHARS not in ('never', 'ignore') or force:
                 name = C.INVALID_VARIABLE_NAMES.sub(replacer, name)
                 if not (silent or C.TRANSFORM_INVALID_GROUP_CHARS == 'silently'):
@@ -49,7 +50,8 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
                     warn = 'Invalid characters were found in group names but not replaced, use -vvvv to see details'
 
                 # remove this message after 2.10 AND changing the default to 'always'
-                group_chars_setting, group_chars_origin = C.config.get_config_value_and_origin('TRANSFORM_INVALID_GROUP_CHARS')
+                group_chars_setting, group_chars_origin = C.config.get_config_value_and_origin(
+                    'TRANSFORM_INVALID_GROUP_CHARS')
                 if group_chars_origin == 'default':
                     display.deprecated('The TRANSFORM_INVALID_GROUP_CHARS settings is set to allow bad characters in group names by default,'
                                        ' this will change, but still be user configurable on deprecation', version='2.10')
@@ -186,7 +188,8 @@ class Group:
             start_ancestors = group.get_ancestors()
             new_ancestors = self.get_ancestors()
             if group in new_ancestors:
-                raise AnsibleError("Adding group '%s' as child to '%s' creates a recursive dependency loop." % (to_native(group.name), to_native(self.name)))
+                raise AnsibleError("Adding group '%s' as child to '%s' creates a recursive dependency loop." % (
+                    to_native(group.name), to_native(self.name)))
             new_ancestors.add(self)
             new_ancestors.difference_update(start_ancestors)
 
@@ -224,7 +227,8 @@ class Group:
                     g.depth = depth
                     unprocessed.update(g.child_groups)
             if depth - start_depth > len(seen):
-                raise AnsibleError("The group named '%s' has a recursive dependency loop." % to_native(self.name))
+                raise AnsibleError(
+                    "The group named '%s' has a recursive dependency loop." % to_native(self.name))
 
     def add_host(self, host):
         if host.name not in self.host_names:

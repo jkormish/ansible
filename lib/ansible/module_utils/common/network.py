@@ -154,5 +154,6 @@ def is_mac(mac_address):
 
     Returns: (Boolean) True if string is valid MAC address, otherwise False
     """
-    mac_addr_regex = re.compile('[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$')
+    mac_addr_regex = re.compile(
+        '[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$')
     return bool(mac_addr_regex.match(mac_address.lower()))

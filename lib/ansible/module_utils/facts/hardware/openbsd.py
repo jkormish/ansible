@@ -97,8 +97,10 @@ class OpenBSDHardware(Hardware):
         #  0 0 0  47512   28160   51   0   0   0   0   0   1   0  116    89   17  0  1 99
         rc, out, err = self.module.run_command("/usr/bin/vmstat")
         if rc == 0:
-            memory_facts['memfree_mb'] = int(out.splitlines()[-1].split()[4]) // 1024
-            memory_facts['memtotal_mb'] = int(self.sysctl['hw.usermem']) // 1024 // 1024
+            memory_facts['memfree_mb'] = int(
+                out.splitlines()[-1].split()[4]) // 1024
+            memory_facts['memtotal_mb'] = int(
+                self.sysctl['hw.usermem']) // 1024 // 1024
 
         # Get swapctl info. swapctl output looks like:
         # total: 69268 1K-blocks allocated, 0 used, 69268 available
@@ -110,8 +112,10 @@ class OpenBSDHardware(Hardware):
                          ord(u'm'): None,
                          ord(u'g'): None}
             data = to_text(out, errors='surrogate_or_strict').split()
-            memory_facts['swapfree_mb'] = int(data[-2].translate(swaptrans)) // 1024
-            memory_facts['swaptotal_mb'] = int(data[1].translate(swaptrans)) // 1024
+            memory_facts['swapfree_mb'] = int(
+                data[-2].translate(swaptrans)) // 1024
+            memory_facts['swaptotal_mb'] = int(
+                data[1].translate(swaptrans)) // 1024
 
         return memory_facts
 

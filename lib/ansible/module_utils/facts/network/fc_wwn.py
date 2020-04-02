@@ -79,5 +79,6 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
                         for line in lscfg_out.splitlines():
                             if 'Network Address' in line:
                                 data = line.split('.')
-                                fc_facts['fibre_channel_wwn'].append(data[-1].rstrip())
+                                fc_facts['fibre_channel_wwn'].append(
+                                    data[-1].rstrip())
         return fc_facts

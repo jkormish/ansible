@@ -28,7 +28,7 @@ description:
        is being rotated out of a load balancer pool.
      - For Windows targets, use the M(win_wait_for) module instead.
 version_added: "0.7"
-options:
+options:F
   host:
     description:
       - A resolvable hostname or IP address to wait for.

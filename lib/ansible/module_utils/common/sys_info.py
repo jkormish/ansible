@@ -11,7 +11,8 @@ from ansible.module_utils import distro
 from ansible.module_utils.common._utils import get_all_subclasses
 
 
-__all__ = ('get_distribution', 'get_distribution_version', 'get_platform_subclass')
+__all__ = ('get_distribution', 'get_distribution_version',
+           'get_platform_subclass')
 
 
 def get_distribution():

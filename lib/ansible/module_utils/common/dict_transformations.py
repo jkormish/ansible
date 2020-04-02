@@ -41,9 +41,11 @@ def camel_dict_to_snake_dict(camel_dict, reversible=False, ignore_list=()):
     snake_dict = {}
     for k, v in camel_dict.items():
         if isinstance(v, dict) and k not in ignore_list:
-            snake_dict[_camel_to_snake(k, reversible=reversible)] = camel_dict_to_snake_dict(v, reversible)
+            snake_dict[_camel_to_snake(
+                k, reversible=reversible)] = camel_dict_to_snake_dict(v, reversible)
         elif isinstance(v, list) and k not in ignore_list:
-            snake_dict[_camel_to_snake(k, reversible=reversible)] = value_is_list(v)
+            snake_dict[_camel_to_snake(
+                k, reversible=reversible)] = value_is_list(v)
         else:
             snake_dict[_camel_to_snake(k, reversible=reversible)] = v
 
@@ -63,7 +65,8 @@ def snake_dict_to_camel_dict(snake_dict, capitalize_first=False):
         new_type = type(complex_type)()
         if isinstance(complex_type, dict):
             for key in complex_type:
-                new_type[_snake_to_camel(key, capitalize_first)] = camelize(complex_type[key], capitalize_first)
+                new_type[_snake_to_camel(key, capitalize_first)] = camelize(
+                    complex_type[key], capitalize_first)
         elif isinstance(complex_type, list):
             for i in range(len(complex_type)):
                 new_type.append(camelize(complex_type[i], capitalize_first))

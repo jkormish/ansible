@@ -5,6 +5,11 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+import traceback
+import os
+import datetime
 __metaclass__ = type
 
 
@@ -99,9 +104,6 @@ EXAMPLES = r'''
         - response3
 '''
 
-import datetime
-import os
-import traceback
 
 PEXPECT_IMP_ERR = None
 try:
@@ -110,9 +112,6 @@ try:
 except ImportError:
     PEXPECT_IMP_ERR = traceback.format_exc()
     HAS_PEXPECT = False
-
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils._text import to_native, to_text
 
 
 def response_closure(module, question, responses):
@@ -216,7 +215,8 @@ def main():
                              '(%s), this module requires pexpect>=3.3. '
                              'Error was %s' % (pexpect.__version__, to_native(e)))
     except pexpect.ExceptionPexpect as e:
-        module.fail_json(msg='%s' % to_native(e), exception=traceback.format_exc())
+        module.fail_json(msg='%s' % to_native(
+            e), exception=traceback.format_exc())
 
     endd = datetime.datetime.now()
     delta = endd - startd

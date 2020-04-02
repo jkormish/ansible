@@ -6,6 +6,8 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils.basic import AnsibleModule
+import os
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -69,9 +71,6 @@ EXAMPLES = '''
 
 RETURN = ''' # '''
 
-import os
-
-from ansible.module_utils.basic import AnsibleModule
 
 APT_REPO_PATH = "/usr/bin/apt-repo"
 
@@ -83,7 +82,8 @@ def apt_repo(module, *args):
     rc, out, err = module.run_command([APT_REPO_PATH] + args)
 
     if rc != 0:
-        module.fail_json(msg="'%s' failed: %s" % (' '.join(['apt-repo'] + args), err))
+        module.fail_json(msg="'%s' failed: %s" %
+                         (' '.join(['apt-repo'] + args), err))
 
     return out
 
@@ -115,7 +115,8 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             repo=dict(type='str', required=True),
-            state=dict(type='str', default='present', choices=['absent', 'present']),
+            state=dict(type='str', default='present',
+                       choices=['absent', 'present']),
             remove_others=dict(type='bool', default=False),
             update=dict(type='bool', default=False),
         ),

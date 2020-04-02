@@ -48,7 +48,8 @@ class HurdPfinetNetwork(Network):
         # FIXME: exit early on falsey socket_path and un-indent whole block
 
         if socket_path:
-            rc, out, err = self.module.run_command([fsysopts_path, '-L', socket_path])
+            rc, out, err = self.module.run_command(
+                [fsysopts_path, '-L', socket_path])
             # FIXME: build up a interfaces datastructure, then assign into network_facts
             network_facts['interfaces'] = []
             for i in out.split():

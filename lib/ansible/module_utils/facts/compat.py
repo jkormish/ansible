@@ -60,7 +60,8 @@ def ansible_facts(module, gather_subset=None):
     the fact value.
     '''
 
-    gather_subset = gather_subset or module.params.get('gather_subset', ['all'])
+    gather_subset = gather_subset or module.params.get(
+        'gather_subset', ['all'])
     gather_timeout = module.params.get('gather_timeout', 10)
     filter_spec = module.params.get('filter', '*')
 

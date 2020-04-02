@@ -36,7 +36,8 @@ class SystemCapabilitiesFactCollector(BaseFactCollector):
         # NOTE: early exit 'if not crash_path' and unindent rest of method -akl
         if capsh_path:
             # NOTE: -> get_caps_data()/parse_caps_data() for easier mocking -akl
-            rc, out, err = module.run_command([capsh_path, "--print"], errors='surrogate_then_replace')
+            rc, out, err = module.run_command(
+                [capsh_path, "--print"], errors='surrogate_then_replace')
             enforced_caps = []
             enforced = 'NA'
             for line in out.splitlines():
@@ -47,7 +48,8 @@ class SystemCapabilitiesFactCollector(BaseFactCollector):
                         enforced = 'False'
                     else:
                         enforced = 'True'
-                        enforced_caps = [i.strip() for i in line.split('=')[1].split(',')]
+                        enforced_caps = [i.strip()
+                                         for i in line.split('=')[1].split(',')]
 
             facts_dict['system_capabilities_enforced'] = enforced
             facts_dict['system_capabilities'] = enforced_caps
