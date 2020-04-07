@@ -190,9 +190,8 @@ def download_run(args):
 
     output_dir = '%s/%s/%s' % (account, project, run_number)
 
-    if not args.test:
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+    if not (args.test or os.path.exists(output_dir)):
+        os.makedirs(output_dir)
 
     if args.run_metadata:
         path = os.path.join(output_dir, 'run.json')
@@ -236,9 +235,8 @@ def download_run_recursive(args, headers, output_dir, run, is_given=False):
     else:
         needed_jobs = [j for j in jobs if j['isConsoleArchived'] and j['statusCode'] == 30]
 
-    if not args.test:
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+    if not (args.test or os.path.exists(output_dir)):
+        os.makedirs(output_dir)
 
     download_jobs(args, needed_jobs, headers, output_dir)
 
@@ -303,31 +301,32 @@ def extract_contents(args, path, output_dir):
     :type path: str
     :type output_dir: str
     """
-    if not args.test:
-        if not os.path.exists(path):
-            return
+    if args.test:
+        return
+    if not os.path.exists(path):
+        return
 
-        with open(path, 'r') as json_fd:
-            items = json.load(json_fd)
+    with open(path, 'r') as json_fd:
+        items = json.load(json_fd)
 
-            for item in items:
-                contents = item['contents'].encode('utf-8')
-                path = output_dir + '/' + re.sub('^/*', '', item['path'])
+        for item in items:
+            contents = item['contents'].encode('utf-8')
+            path = output_dir + '/' + re.sub('^/*', '', item['path'])
 
-                directory = os.path.dirname(path)
+            directory = os.path.dirname(path)
 
-                if not os.path.exists(directory):
-                    os.makedirs(directory)
+            if not os.path.exists(directory):
+                os.makedirs(directory)
 
-                if args.verbose:
-                    print(path)
+            if args.verbose:
+                print(path)
 
-                if path.endswith('.json'):
-                    contents = json.dumps(json.loads(contents), sort_keys=True, indent=4).encode('utf-8')
+            if path.endswith('.json'):
+                contents = json.dumps(json.loads(contents), sort_keys=True, indent=4).encode('utf-8')
 
-                if not os.path.exists(path):
-                    with open(path, 'wb') as output_fd:
-                        output_fd.write(contents)
+            if not os.path.exists(path):
+                with open(path, 'wb') as output_fd:
+                    output_fd.write(contents)
 
 
 def download(args, headers, path, url, is_json=True):

@@ -164,7 +164,7 @@ class WorkerProcess(multiprocessing_context.Process):
             ).run()
 
             display.debug("done running TaskExecutor() for %s/%s [%s]" % (self._host, self._task, self._task._uuid))
-            self._host.vars = dict()
+            self._host.vars = {}
             self._host.groups = []
             task_result = TaskResult(
                 self._host.name,
@@ -179,7 +179,7 @@ class WorkerProcess(multiprocessing_context.Process):
             display.debug("done sending task result for task %s" % self._task._uuid)
 
         except AnsibleConnectionFailure:
-            self._host.vars = dict()
+            self._host.vars = {}
             self._host.groups = []
             task_result = TaskResult(
                 self._host.name,
@@ -192,7 +192,7 @@ class WorkerProcess(multiprocessing_context.Process):
         except Exception as e:
             if not isinstance(e, (IOError, EOFError, KeyboardInterrupt, SystemExit)) or isinstance(e, TemplateNotFound):
                 try:
-                    self._host.vars = dict()
+                    self._host.vars = {}
                     self._host.groups = []
                     task_result = TaskResult(
                         self._host.name,

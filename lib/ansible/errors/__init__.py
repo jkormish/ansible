@@ -286,10 +286,7 @@ class AnsibleAction(AnsibleRuntimeError):
 
         super(AnsibleAction, self).__init__(message=message, obj=obj, show_content=show_content,
                                             suppress_extended_error=suppress_extended_error, orig_exc=orig_exc)
-        if result is None:
-            self.result = {}
-        else:
-            self.result = result
+        self.result = {} if result is None else result
 
 
 class AnsibleActionSkip(AnsibleAction):

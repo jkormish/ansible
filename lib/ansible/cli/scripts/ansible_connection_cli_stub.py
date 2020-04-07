@@ -88,7 +88,7 @@ class ConnectionProcess(object):
 
     def start(self, variables):
         try:
-            messages = list()
+            messages = []
             result = {}
 
             messages.append(('vvvv', 'control socket path is %s' % self.socket_path))

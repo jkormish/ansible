@@ -429,7 +429,7 @@ class DocCLI(CLI):
                 display.warning("%s has a documentation formatting error" % plugin)
                 continue
 
-            if not doc or not isinstance(doc, dict):
+            if not (doc and isinstance(doc, dict)):
                 with open(filename) as f:
                     metadata = extract_metadata(module_data=f.read())
                 if metadata[0]:
@@ -522,11 +522,7 @@ class DocCLI(CLI):
             required = opt.pop('required', False)
             if not isinstance(required, bool):
                 raise AnsibleError("Incorrect value for 'Required', a boolean is needed.: %s" % required)
-            if required:
-                opt_leadin = "="
-            else:
-                opt_leadin = "-"
-
+            opt_leadin = '=' if required else '-'
             text.append("%s %s" % (opt_leadin, o))
 
             if isinstance(opt['description'], list):
@@ -604,10 +600,7 @@ class DocCLI(CLI):
 
     @staticmethod
     def get_metadata_block(doc):
-        text = []
-
-        text.append("METADATA:")
-        text.append('\tSUPPORT LEVEL: %s' % doc['metadata']['supported_by'])
+        text = ['METADATA:', '\tSUPPORT LEVEL: %s' % doc['metadata']['supported_by']]
 
         for k in (m for m in doc['metadata'] if m != 'supported_by'):
             if isinstance(k, list):

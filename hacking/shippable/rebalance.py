@@ -62,9 +62,7 @@ def parse_args():
     if argcomplete:
         argcomplete.autocomplete(parser)
 
-    args = parser.parse_args()
-
-    return args
+    return parser.parse_args()
 
 
 def get_raw_test_targets(args, test_path):

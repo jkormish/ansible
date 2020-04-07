@@ -73,11 +73,7 @@ def list_collection_dirs(search_paths=None, coll_filter=None):
 
                     if os.path.isdir(namespace_dir):
 
-                        if coll is None:
-                            colls = os.listdir(namespace_dir)
-                        else:
-                            colls = [coll]
-
+                        colls = os.listdir(namespace_dir) if coll is None else [coll]
                         for collection in colls:
 
                             # skip dupe collections as they will be masked in execution

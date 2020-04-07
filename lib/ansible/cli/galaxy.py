@@ -82,8 +82,8 @@ def _display_collection(collection, cwidth=10, vwidth=7, min_cwidth=10, min_vwid
 
 def _get_collection_widths(collections):
     if is_iterable(collections):
-        fqcn_set = set(to_text(c) for c in collections)
-        version_set = set(to_text(c.latest_version) for c in collections)
+        fqcn_set = {to_text(c) for c in collections}
+        version_set = {to_text(c.latest_version) for c in collections}
     else:
         fqcn_set = set([to_text(collections)])
         version_set = set([collections.latest_version])
@@ -678,7 +678,7 @@ class GalaxyCLI(CLI):
     def _require_one_of_collections_requirements(self, collections, requirements_file):
         if collections and requirements_file:
             raise AnsibleError("The positional collection_name arg and --requirements-file are mutually exclusive.")
-        elif not collections and not requirements_file:
+        elif not (collections or requirements_file):
             raise AnsibleError("You must specify a collection name or a requirements file.")
         elif requirements_file:
             requirements_file = GalaxyCLI._resolve_path(requirements_file)
@@ -1282,7 +1282,12 @@ class GalaxyCLI(CLI):
         if context.CLIARGS['args']:
             search = '+'.join(context.CLIARGS['args'])
 
-        if not search and not context.CLIARGS['platforms'] and not context.CLIARGS['galaxy_tags'] and not context.CLIARGS['author']:
+        if not (
+            search
+            or context.CLIARGS['platforms']
+            or context.CLIARGS['galaxy_tags']
+            or context.CLIARGS['author']
+        ):
             raise AnsibleError("Invalid query. At least one search term, platform, galaxy tag or author must be provided.")
 
         response = self.api.search_roles(search, platforms=context.CLIARGS['platforms'],
@@ -1299,9 +1304,11 @@ class GalaxyCLI(CLI):
         else:
             data.append(u"Found %d roles matching your search:" % response['count'])
 
-        max_len = []
-        for role in response['results']:
-            max_len.append(len(role['username'] + '.' + role['name']))
+        max_len = [
+            len(role['username'] + '.' + role['name'])
+            for role in response['results']
+        ]
+
         name_len = max(max_len)
         format_str = u" %%-%ds %%s" % name_len
         data.append(u'')
@@ -1345,14 +1352,6 @@ class GalaxyCLI(CLI):
     def execute_import(self):
         """ used to import a role into Ansible Galaxy """
 
-        colors = {
-            'INFO': 'normal',
-            'WARNING': C.COLOR_WARN,
-            'ERROR': C.COLOR_ERROR,
-            'SUCCESS': C.COLOR_OK,
-            'FAILED': C.COLOR_ERROR,
-        }
-
         github_user = to_text(context.CLIARGS['github_user'], errors='surrogate_or_strict')
         github_repo = to_text(context.CLIARGS['github_repo'], errors='surrogate_or_strict')
 
@@ -1384,6 +1383,14 @@ class GalaxyCLI(CLI):
             # Get the status of the import
             msg_list = []
             finished = False
+            colors = {
+                'INFO': 'normal',
+                'WARNING': C.COLOR_WARN,
+                'ERROR': C.COLOR_ERROR,
+                'SUCCESS': C.COLOR_OK,
+                'FAILED': C.COLOR_ERROR,
+            }
+
             while not finished:
                 task = self.api.get_import_task(task_id=task[0]['id'])
                 for msg in task[0]['summary_fields']['task_messages']:

@@ -65,14 +65,11 @@ class HostState:
                 return "UNKNOWN STATE"
 
         def _failed_state_to_string(n):
-            states = {1: "FAILED_SETUP", 2: "FAILED_TASKS", 4: "FAILED_RESCUE", 8: "FAILED_ALWAYS"}
             if n == 0:
                 return "FAILED_NONE"
             else:
-                ret = []
-                for i in (1, 2, 4, 8):
-                    if n & i:
-                        ret.append(states[i])
+                states = {1: "FAILED_SETUP", 2: "FAILED_TASKS", 4: "FAILED_RESCUE", 8: "FAILED_ALWAYS"}
+                ret = [states[i] for i in (1, 2, 4, 8) if n & i]
                 return "|".join(ret)
 
         return ("HOST STATE: block=%d, task=%d, rescue=%d, always=%d, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? (%s), "
@@ -95,13 +92,23 @@ class HostState:
         if not isinstance(other, HostState):
             return False
 
-        for attr in ('_blocks', 'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task',
-                     'run_state', 'fail_state', 'pending_setup', 'cur_dep_chain',
-                     'tasks_child_state', 'rescue_child_state', 'always_child_state'):
-            if getattr(self, attr) != getattr(other, attr):
-                return False
-
-        return True
+        return all(
+            getattr(self, attr) == getattr(other, attr)
+            for attr in (
+                '_blocks',
+                'cur_block',
+                'cur_regular_task',
+                'cur_rescue_task',
+                'cur_always_task',
+                'run_state',
+                'fail_state',
+                'pending_setup',
+                'cur_dep_chain',
+                'tasks_child_state',
+                'rescue_child_state',
+                'always_child_state',
+            )
+        )
 
     def get_current_block(self):
         return self._blocks[self.cur_block]
@@ -474,7 +481,11 @@ class PlayIterator:
         self._play._removed_hosts.append(host.name)
 
     def get_failed_hosts(self):
-        return dict((host, True) for (host, state) in iteritems(self._host_states) if self._check_failed_state(state))
+        return {
+            host: True
+            for (host, state) in iteritems(self._host_states)
+            if self._check_failed_state(state)
+        }
 
     def _check_failed_state(self, state):
         if state is None:
@@ -492,10 +503,7 @@ class PlayIterator:
                 return not state.did_rescue
         elif state.run_state == self.ITERATING_TASKS and self._check_failed_state(state.tasks_child_state):
             cur_block = self._blocks[state.cur_block]
-            if len(cur_block.rescue) > 0 and state.fail_state & self.FAILED_RESCUE == 0:
-                return False
-            else:
-                return True
+            return len(cur_block.rescue) <= 0 or state.fail_state & self.FAILED_RESCUE != 0
         return False
 
     def is_failed(self, host):

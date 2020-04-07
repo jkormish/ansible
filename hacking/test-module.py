@@ -97,7 +97,7 @@ def write_argsfile(argstring, json=False):
 
 
 def get_interpreters(interpreter):
-    result = dict()
+    result = {}
     if interpreter:
         if '=' not in interpreter:
             print("interpreter must by in the form of ansible_python_interpreter=/usr/bin/python")

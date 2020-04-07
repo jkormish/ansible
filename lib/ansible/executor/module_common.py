@@ -612,11 +612,7 @@ class ModuleInfo:
             self._info = info = imp.find_module(name, paths)
             self.py_src = info[2][2] == imp.PY_SOURCE
             self.pkg_dir = info[2][2] == imp.PKG_DIRECTORY
-            if self.pkg_dir:
-                path = os.path.join(info[1], '__init__.py')
-            else:
-                path = info[1]
-
+            path = os.path.join(info[1], '__init__.py') if self.pkg_dir else info[1]
         self.path = path
 
     def get_source(self):
@@ -657,8 +653,9 @@ class CollectionModuleInfo(ModuleInfo):
         # FIXME (nitz): need this in py2 for some reason TBD, but we shouldn't (get_data delegates
         # to wrong loader without it)
         pkg = import_module(self._package_name)
-        data = pkgutil.get_data(to_native(self._package_name), to_native(self._mod_name + '.py'))
-        return data
+        return pkgutil.get_data(
+            to_native(self._package_name), to_native(self._mod_name + '.py')
+        )
 
 
 def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, zf):

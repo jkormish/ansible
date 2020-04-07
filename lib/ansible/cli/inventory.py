@@ -103,21 +103,14 @@ class InventoryCLI(CLI):
         self.validate_conflicts(options)
 
         # there can be only one! and, at least, one!
-        used = 0
-        for opt in (options.list, options.host, options.graph):
-            if opt:
-                used += 1
+        used = sum(1 for opt in (options.list, options.host, options.graph) if opt)
         if used == 0:
             raise AnsibleOptionsError("No action selected, at least one of --host, --graph or --list needs to be specified.")
         elif used > 1:
             raise AnsibleOptionsError("Conflicting options used, only one of --host, --graph or --list can be used at the same time.")
 
         # set host pattern to default if not supplied
-        if options.args:
-            options.pattern = options.args
-        else:
-            options.pattern = 'all'
-
+        options.pattern = options.args if options.args else 'all'
         return options
 
     def run(self):
@@ -218,8 +211,7 @@ class InventoryCLI(CLI):
         return self._remove_internal(hostvars)
 
     def _get_group(self, gname):
-        group = self.inventory.groups.get(gname)
-        return group
+        return self.inventory.groups.get(gname)
 
     @staticmethod
     def _remove_internal(dump):
@@ -280,8 +272,7 @@ class InventoryCLI(CLI):
         seen = set()
 
         def format_group(group):
-            results = {}
-            results[group.name] = {}
+            results = {group.name: {}}
             if group.name != 'all':
                 results[group.name]['hosts'] = [h.name for h in sorted(group.hosts, key=attrgetter('name'))]
             results[group.name]['children'] = []
@@ -353,9 +344,7 @@ class InventoryCLI(CLI):
         has_ungrouped = bool(next(g.hosts for g in top.child_groups if g.name == 'ungrouped'))
 
         def format_group(group):
-            results = {}
-            results[group.name] = {}
-
+            results = {group.name: {}}
             results[group.name]['children'] = []
             for subgroup in sorted(group.child_groups, key=attrgetter('name')):
                 if subgroup.name == 'ungrouped' and not has_ungrouped:

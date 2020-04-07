@@ -112,8 +112,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             return (None, vault_id)
 
         parts = vault_id.split('@', 1)
-        ret = tuple(parts)
-        return ret
+        return tuple(parts)
 
     @staticmethod
     def build_vault_ids(vault_ids, vault_password_files=None,
@@ -269,9 +268,8 @@ class CLI(with_metaclass(ABCMeta, object)):
     def validate_conflicts(self, op, runas_opts=False, fork_opts=False):
         ''' check for conflicting options '''
 
-        if fork_opts:
-            if op.forks < 1:
-                self.parser.error("The number of processes (--forks) must be >= 1")
+        if fork_opts and op.forks < 1:
+            self.parser.error("The number of processes (--forks) must be >= 1")
 
         return op
 
@@ -494,7 +492,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         inventory.subset(subset)
 
         hosts = inventory.list_hosts(pattern)
-        if not hosts and no_hosts is False:
+        if not (hosts or no_hosts):
             raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
 
         return hosts

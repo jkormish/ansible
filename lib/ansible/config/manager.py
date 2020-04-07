@@ -343,12 +343,18 @@ class ConfigManager(object):
 
     def get_plugin_options(self, plugin_type, name, keys=None, variables=None, direct=None):
 
-        options = {}
         defs = self.get_configuration_definitions(plugin_type, name)
-        for option in defs:
-            options[option] = self.get_config_value(option, plugin_type=plugin_type, plugin_name=name, keys=keys, variables=variables, direct=direct)
-
-        return options
+        return {
+            option: self.get_config_value(
+                option,
+                plugin_type=plugin_type,
+                plugin_name=name,
+                keys=keys,
+                variables=variables,
+                direct=direct,
+            )
+            for option in defs
+        }
 
     def get_plugin_vars(self, plugin_type, name):
 

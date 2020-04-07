@@ -229,9 +229,13 @@ def create_long_message(versions, name):
     next_release = next_release_date()
 
     template = JINJA_ENV.get_template('long')
-    message = template.render(versions=versions, version_str=version_str,
-                              name=name, hashes=hashes, next_release=next_release)
-    return message
+    return template.render(
+        versions=versions,
+        version_str=version_str,
+        name=name,
+        hashes=hashes,
+        next_release=next_release,
+    )
 
 
 def create_short_message(versions):

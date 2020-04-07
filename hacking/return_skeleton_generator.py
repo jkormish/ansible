@@ -80,11 +80,7 @@ def get_all_items(data):
 def main(args):
     yaml.representer.SafeRepresenter.add_representer(OrderedDict, represent_ordereddict)
 
-    if args:
-        src = open(args[0])
-    else:
-        src = sys.stdin
-
+    src = open(args[0]) if args else sys.stdin
     data = json.load(src, strict=False)
     docs = get_all_items(data)
     if 'invocation' in docs:

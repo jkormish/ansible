@@ -50,7 +50,7 @@ class PlaybookExecutor:
         self._variable_manager = variable_manager
         self._loader = loader
         self.passwords = passwords
-        self._unreachable_hosts = dict()
+        self._unreachable_hosts = {}
 
         if context.CLIARGS.get('listhosts') or context.CLIARGS.get('listtasks') or \
                 context.CLIARGS.get('listtags') or context.CLIARGS.get('syntax'):
@@ -271,17 +271,13 @@ class PlaybookExecutor:
             serial = pct_to_int(serial_batch_list[cur_item], all_hosts_len)
 
             # if the serial count was not specified or is invalid, default to
-            # a list of all hosts, otherwise grab a chunk of the hosts equal
-            # to the current serial item size
+                    # a list of all hosts, otherwise grab a chunk of the hosts equal
+                    # to the current serial item size
             if serial <= 0:
                 serialized_batches.append(all_hosts)
                 break
             else:
-                play_hosts = []
-                for x in range(serial):
-                    if len(all_hosts) > 0:
-                        play_hosts.append(all_hosts.pop(0))
-
+                play_hosts = [all_hosts.pop(0) for _ in range(serial) if len(all_hosts) > 0]
                 serialized_batches.append(play_hosts)
 
             # increment the current batch list item number, and if we've hit

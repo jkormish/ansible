@@ -195,12 +195,12 @@ class TaskExecutor:
         '''
 
         # save the play context variables to a temporary dictionary,
-        # so that we can modify the job vars without doing a full copy
-        # and later restore them to avoid modifying things too early
-        play_context_vars = dict()
+            # so that we can modify the job vars without doing a full copy
+            # and later restore them to avoid modifying things too early
+        play_context_vars = {}
         self._play_context.update_vars(play_context_vars)
 
-        old_vars = dict()
+        old_vars = {}
         for k in play_context_vars:
             if k in self._job_vars:
                 old_vars[k] = self._job_vars[k]
@@ -336,7 +336,7 @@ class TaskExecutor:
                     task_vars['ansible_loop']['nextitem'] = items[item_index + 1]
                 except IndexError:
                     pass
-                if item_index - 1 >= 0:
+                if item_index >= 1:
                     task_vars['ansible_loop']['previtem'] = items[item_index - 1]
 
             # Update template vars to reflect current loop iteration
@@ -943,12 +943,11 @@ class TaskExecutor:
         if plugin.get('type'):
             option_vars.extend(C.config.get_plugin_vars(plugin['type'], plugin['name']))
 
-        options = {}
-        for k in option_vars:
-            if k in final_vars:
-                options[k] = templar.template(final_vars[k])
-
-        return options
+        return {
+            k: templar.template(final_vars[k])
+            for k in option_vars
+            if k in final_vars
+        }
 
     def _set_plugin_options(self, plugin_type, variables, templar, task_keys):
         try:
@@ -957,10 +956,10 @@ class TaskExecutor:
             # Some plugins are assigned to private attrs, ``become`` is not
             plugin = getattr(self._connection, plugin_type)
         option_vars = C.config.get_plugin_vars(plugin_type, plugin._load_name)
-        options = {}
-        for k in option_vars:
-            if k in variables:
-                options[k] = templar.template(variables[k])
+        options = {
+            k: templar.template(variables[k]) for k in option_vars if k in variables
+        }
+
         # TODO move to task method?
         plugin.set_options(task_keys=task_keys, var_options=options)
 
@@ -1132,10 +1131,9 @@ def start_connection(play_context, variables, task_uuid):
                     display.vvvv(message, host=play_context.remote_addr)
 
     if 'error' in result:
-        if play_context.verbosity > 2:
-            if result.get('exception'):
-                msg = "The full traceback is:\n" + result['exception']
-                display.display(msg, color=C.COLOR_ERROR)
+        if play_context.verbosity > 2 and result.get('exception'):
+            msg = "The full traceback is:\n" + result['exception']
+            display.display(msg, color=C.COLOR_ERROR)
         raise AnsibleError(result['error'])
 
     return result['socket_path']

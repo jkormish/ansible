@@ -273,8 +273,7 @@ class VaultCLI(CLI):
         for line in vault_ciphertext.splitlines():
             lines.append('%s%s' % (' ' * indent, line))
 
-        yaml_ciphertext = '\n'.join(lines)
-        return yaml_ciphertext
+        return '\n'.join(lines)
 
     def execute_encrypt_string(self):
         ''' encrypt the supplied string using the provided vault secret '''

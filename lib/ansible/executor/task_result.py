@@ -38,10 +38,7 @@ class TaskResult:
         else:
             self._result = DataLoader().load(return_data)
 
-        if task_fields is None:
-            self._task_fields = dict()
-        else:
-            self._task_fields = task_fields
+        self._task_fields = dict() if task_fields is None else task_fields
 
     @property
     def task_name(self):

@@ -112,9 +112,7 @@ def insert_metadata(module_data, new_metadata, insertion_line, targets=('ANSIBLE
     assignments = ' = '.join(targets)
     pretty_metadata = pformat(new_metadata, width=1).split('\n')
 
-    new_lines = []
-    new_lines.append('{0} = {1}'.format(assignments, pretty_metadata[0]))
-
+    new_lines = ['{0} = {1}'.format(assignments, pretty_metadata[0])]
     if len(pretty_metadata) > 1:
         for line in pretty_metadata[1:]:
             new_lines.append('{0}{1}'.format(' ' * (len(assignments) - 1 + len(' = {')), line))
@@ -151,7 +149,7 @@ def parse_assigned_metadata_initial(csvfile):
             elif record[12] == 'community':
                 supported_by = 'community'
             else:
-                print('Module %s has no supported_by field.  Using community' % record[0])
+                print('Module %s has no supported_by field.  Using community' % module)
                 supported_by = 'community'
                 supported_by = DEFAULT_METADATA['supported_by']
 

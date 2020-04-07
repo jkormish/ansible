@@ -130,10 +130,7 @@ def _git_repo_info(repo_path):
             branch_path = os.path.join(repo_path, "HEAD")
 
         date = time.localtime(os.stat(branch_path).st_mtime)
-        if time.daylight == 0:
-            offset = time.timezone
-        else:
-            offset = time.altzone
+        offset = time.timezone if time.daylight == 0 else time.altzone
         result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit, time.strftime("%Y/%m/%d %H:%M:%S", date), int(offset / -36))
     else:
         result = ''
@@ -163,11 +160,7 @@ def _gitinfo():
 
 def version(prog=None):
     """ return ansible version """
-    if prog:
-        result = " ".join((prog, __version__))
-    else:
-        result = __version__
-
+    result = ' '.join((prog, __version__)) if prog else __version__
     gitinfo = _gitinfo()
     if gitinfo:
         result = result + " {0}".format(gitinfo)

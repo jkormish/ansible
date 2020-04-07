@@ -25,14 +25,14 @@ class PSModuleDepFinder(object):
 
     def __init__(self):
         # This is also used by validate-modules to get a module's required utils in base and a collection.
-        self.ps_modules = dict()
-        self.exec_scripts = dict()
+        self.ps_modules = {}
+        self.exec_scripts = {}
 
         # by defining an explicit dict of cs utils and where they are used, we
-        # can potentially save time by not adding the type multiple times if it
-        # isn't needed
-        self.cs_utils_wrapper = dict()
-        self.cs_utils_module = dict()
+            # can potentially save time by not adding the type multiple times if it
+            # isn't needed
+        self.cs_utils_wrapper = {}
+        self.cs_utils_module = {}
 
         self.ps_version = None
         self.os_version = None
@@ -76,11 +76,7 @@ class PSModuleDepFinder(object):
     def scan_module(self, module_data, fqn=None, wrapper=False, powershell=True):
         lines = module_data.split(b'\n')
         module_utils = set()
-        if wrapper:
-            cs_utils = self.cs_utils_wrapper
-        else:
-            cs_utils = self.cs_utils_module
-
+        cs_utils = self.cs_utils_wrapper if wrapper else self.cs_utils_module
         if powershell:
             checks = [
                 # PS module contains '#Requires -Module Ansible.ModuleUtils.*'
@@ -149,10 +145,7 @@ class PSModuleDepFinder(object):
         b_data = to_bytes(data)
 
         # remove comments to reduce the payload size in the exec wrappers
-        if C.DEFAULT_DEBUG:
-            exec_script = b_data
-        else:
-            exec_script = _strip_comments(b_data)
+        exec_script = b_data if C.DEFAULT_DEBUG else _strip_comments(b_data)
         self.exec_scripts[name] = to_bytes(exec_script)
         self.scan_module(b_data, wrapper=True, powershell=True)
 

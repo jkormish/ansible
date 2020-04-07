@@ -165,7 +165,10 @@ class PullCLI(CLI):
         limit_opts = 'localhost,%s,127.0.0.1' % ','.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
         base_opts = '-c local '
         if context.CLIARGS['verbosity'] > 0:
-            base_opts += ' -%s' % ''.join(["v" for x in range(0, context.CLIARGS['verbosity'])])
+            base_opts += ' -%s' % ''.join(
+                ["v" for x in range(context.CLIARGS['verbosity'])]
+            )
+
 
         # Attempt to use the inventory passed in as an argument
         # It might not yet have been downloaded so use localhost as default
@@ -317,7 +320,6 @@ class PullCLI(CLI):
             if rc != 0:
                 display.warning("%s: %s" % (playbook, PullCLI.PLAYBOOK_ERRORS[rc]))
                 return None
-            return playbook
         else:
             fqdn = socket.getfqdn()
             hostpb = os.path.join(path, fqdn + '.yml')
@@ -333,4 +335,5 @@ class PullCLI(CLI):
                     errors.append("%s: %s" % (pb, PullCLI.PLAYBOOK_ERRORS[rc]))
             if playbook is None:
                 display.warning("\n".join(errors))
-            return playbook
+
+        return playbook

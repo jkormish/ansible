@@ -174,10 +174,7 @@ class ConfigCLI(CLI):
 
         for setting in sorted(defaults):
             if isinstance(defaults[setting], Setting):
-                if defaults[setting].origin == 'default':
-                    color = 'green'
-                else:
-                    color = 'yellow'
+                color = 'green' if defaults[setting].origin == 'default' else 'yellow'
                 msg = "%s(%s) = %s" % (setting, defaults[setting].origin, defaults[setting].value)
             else:
                 color = 'green'

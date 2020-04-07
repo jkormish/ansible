@@ -62,7 +62,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.pattern = None
         self.variable_manager = None
         self.loader = None
-        self.passwords = dict()
+        self.passwords = {}
 
         self.modules = None
         self.cwd = '*'
@@ -139,26 +139,27 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def _find_modules_in_path(self, path):
 
-        if os.path.isdir(path):
-            for module in os.listdir(path):
-                if module.startswith('.'):
+        if not os.path.isdir(path):
+            return
+        for module in os.listdir(path):
+            if module.startswith('.'):
+                continue
+            elif os.path.isdir(module):
+                self._find_modules_in_path(module)
+            elif module.startswith('__'):
+                continue
+            elif any(module.endswith(x) for x in C.BLACKLIST_EXTS):
+                continue
+            elif module in C.IGNORE_FILES:
+                continue
+            elif module.startswith('_'):
+                fullpath = '/'.join([path, module])
+                if os.path.islink(fullpath):  # avoids aliases
                     continue
-                elif os.path.isdir(module):
-                    self._find_modules_in_path(module)
-                elif module.startswith('__'):
-                    continue
-                elif any(module.endswith(x) for x in C.BLACKLIST_EXTS):
-                    continue
-                elif module in C.IGNORE_FILES:
-                    continue
-                elif module.startswith('_'):
-                    fullpath = '/'.join([path, module])
-                    if os.path.islink(fullpath):  # avoids aliases
-                        continue
-                    module = module.replace('_', '', 1)
+                module = module.replace('_', '', 1)
 
-                module = os.path.splitext(module)[0]  # removes the extension
-                yield module
+            module = os.path.splitext(module)[0]  # removes the extension
+            yield module
 
     def default(self, arg, forceshell=False):
         """ actually runs modules """
@@ -362,19 +363,20 @@ class ConsoleCLI(CLI, cmd.Cmd):
     do_EOF = do_exit
 
     def helpdefault(self, module_name):
-        if module_name in self.modules:
-            in_path = module_loader.find_plugin(module_name)
-            if in_path:
-                oc, a, _, _ = plugin_docs.get_docstring(in_path, fragment_loader)
-                if oc:
-                    display.display(oc['short_description'])
-                    display.display('Parameters:')
-                    for opt in oc['options'].keys():
-                        display.display('  ' + stringc(opt, self.NORMAL_PROMPT) + ' ' + oc['options'][opt]['description'][0])
-                else:
-                    display.error('No documentation found for %s.' % module_name)
+        if module_name not in self.modules:
+            return
+        in_path = module_loader.find_plugin(module_name)
+        if in_path:
+            oc, a, _, _ = plugin_docs.get_docstring(in_path, fragment_loader)
+            if oc:
+                display.display(oc['short_description'])
+                display.display('Parameters:')
+                for opt in oc['options'].keys():
+                    display.display('  ' + stringc(opt, self.NORMAL_PROMPT) + ' ' + oc['options'][opt]['description'][0])
             else:
-                display.error('%s is not a valid command, use ? to list all valid commands.' % module_name)
+                display.error('No documentation found for %s.' % module_name)
+        else:
+            display.error('%s is not a valid command, use ? to list all valid commands.' % module_name)
 
     def complete_cd(self, text, line, begidx, endidx):
         mline = line.partition(' ')[2]
