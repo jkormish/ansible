@@ -122,7 +122,7 @@ def command_release(args):
     date = datetime.datetime.strptime(args.date, "%Y-%m-%d").date()
     reload_plugins = args.reload_plugins  # type: bool
 
-    if not version or not codename:
+    if not (version and codename):
         import ansible.release
 
         version = version or ansible.release.__version__
@@ -151,9 +151,7 @@ def load_changes():
     """Load changes metadata.
     :rtype: ChangesMetadata
     """
-    changes = ChangesMetadata(CHANGES_PATH)
-
-    return changes
+    return ChangesMetadata(CHANGES_PATH)
 
 
 def load_plugins(version, force_reload):
@@ -193,9 +191,7 @@ def load_plugins(version, force_reload):
         with open(plugin_cache_path, 'w') as plugin_cache_fd:
             yaml.safe_dump(plugins_data, plugin_cache_fd, default_flow_style=False)
 
-    plugins = PluginDescription.from_dict(plugins_data['plugins'])
-
-    return plugins
+    return PluginDescription.from_dict(plugins_data['plugins'])
 
 
 def load_fragments(paths=None, exceptions=None):
@@ -235,7 +231,13 @@ def lint_fragments(fragments, exceptions):
     for fragment in fragments:
         errors += linter.lint(fragment)
 
-    messages = sorted(set('%s:%d:%d: %s' % (error[0], error[1], error[2], error[3]) for error in errors))
+    messages = sorted(
+        {
+            '%s:%d:%d: %s' % (error[0], error[1], error[2], error[3])
+            for error in errors
+        }
+    )
+
 
     for message in messages:
         print(message)
@@ -404,7 +406,7 @@ class ChangelogGenerator(object):
 
                 self.plugins[plugin.type].append(plugin)
 
-        self.fragments = dict((fragment.name, fragment) for fragment in fragments)
+        self.fragments = {fragment.name: fragment for fragment in fragments}
 
     def generate(self):
         """Generate the changelog.
@@ -504,7 +506,12 @@ class ChangelogGenerator(object):
         have_section = False
 
         for plugin_type in sorted(self.plugins):
-            plugins = dict((plugin.name, plugin) for plugin in self.plugins[plugin_type] if plugin.name in plugin_types_and_names.get(plugin_type, []))
+            plugins = {
+                plugin.name: plugin
+                for plugin in self.plugins[plugin_type]
+                if plugin.name in plugin_types_and_names.get(plugin_type, [])
+            }
+
 
             if not plugins:
                 continue
@@ -526,7 +533,12 @@ class ChangelogGenerator(object):
         if not module_names:
             return
 
-        modules = dict((module.name, module) for module in self.modules if module.name in module_names)
+        modules = {
+            module.name: module
+            for module in self.modules
+            if module.name in module_names
+        }
+
         previous_section = None
 
         modules_by_namespace = collections.defaultdict(list)
@@ -706,11 +718,17 @@ class ChangesMetadata(object):
             self.known_fragments |= set(config.get('fragments', []))
 
             for plugin_type, plugin_names in config.get('plugins', {}).items():
-                self.known_plugins |= set('%s/%s' % (plugin_type, plugin_name) for plugin_name in plugin_names)
+                self.known_plugins |= {
+                    '%s/%s' % (plugin_type, plugin_name)
+                    for plugin_name in plugin_names
+                }
+
 
             module_names = config.get('modules', [])
 
-            self.known_plugins |= set('module/%s' % module_name for module_name in module_names)
+            self.known_plugins |= {
+                'module/%s' % module_name for module_name in module_names
+            }
 
     def prune_plugins(self, plugins):
         """Remove plugins which are not in the provided list of plugins.
@@ -723,27 +741,45 @@ class ChangesMetadata(object):
 
         for version, config in self.releases.items():
             if 'modules' in config:
-                invalid_modules = set(module for module in config['modules'] if module not in valid_plugins['module'])
+                invalid_modules = {
+                    module
+                    for module in config['modules']
+                    if module not in valid_plugins['module']
+                }
+
                 config['modules'] = [module for module in config['modules'] if module not in invalid_modules]
-                self.known_plugins -= set('module/%s' % module for module in invalid_modules)
+                self.known_plugins -= {'module/%s' % module for module in invalid_modules}
 
             if 'plugins' in config:
                 for plugin_type in config['plugins']:
-                    invalid_plugins = set(plugin for plugin in config['plugins'][plugin_type] if plugin not in valid_plugins[plugin_type])
+                    invalid_plugins = {
+                        plugin
+                        for plugin in config['plugins'][plugin_type]
+                        if plugin not in valid_plugins[plugin_type]
+                    }
+
                     config['plugins'][plugin_type] = [plugin for plugin in config['plugins'][plugin_type] if plugin not in invalid_plugins]
-                    self.known_plugins -= set('%s/%s' % (plugin_type, plugin) for plugin in invalid_plugins)
+                    self.known_plugins -= {
+                        '%s/%s' % (plugin_type, plugin)
+                        for plugin in invalid_plugins
+                    }
 
     def prune_fragments(self, fragments):
         """Remove fragments which are not in the provided list of fragments.
         :type fragments: list[ChangelogFragment]
         """
-        valid_fragments = set(fragment.name for fragment in fragments)
+        valid_fragments = {fragment.name for fragment in fragments}
 
         for version, config in self.releases.items():
             if 'fragments' not in config:
                 continue
 
-            invalid_fragments = set(fragment for fragment in config['fragments'] if fragment not in valid_fragments)
+            invalid_fragments = {
+                fragment
+                for fragment in config['fragments']
+                if fragment not in valid_fragments
+            }
+
             config['fragments'] = [fragment for fragment in config['fragments'] if fragment not in invalid_fragments]
             self.known_fragments -= set(config['fragments'])
 

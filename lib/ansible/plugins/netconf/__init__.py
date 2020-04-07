@@ -157,8 +157,7 @@ class NetconfBase(AnsiblePlugin):
         if isinstance(filter, list):
             filter = tuple(filter)
         resp = self.m.get(filter=filter, with_defaults=with_defaults)
-        response = resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
-        return response
+        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     def edit_config(self, config=None, format='xml', target='candidate', default_operation=None, test_option=None, error_option=None):
         """

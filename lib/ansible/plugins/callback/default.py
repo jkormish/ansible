@@ -161,20 +161,21 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_skipped(self, result):
 
-        if self.display_skipped_hosts:
+        if not self.display_skipped_hosts:
 
-            self._clean_results(result._result, result._task.action)
+            return
+        self._clean_results(result._result, result._task.action)
 
-            if self._last_task_banner != result._task._uuid:
-                self._print_task_banner(result._task)
+        if self._last_task_banner != result._task._uuid:
+            self._print_task_banner(result._task)
 
-            if result._task.loop and 'results' in result._result:
-                self._process_items(result)
-            else:
-                msg = "skipping: [%s]" % result._host.get_name()
-                if self._run_is_verbose(result):
-                    msg += " => %s" % self._dump_results(result._result)
-                self._display.display(msg, color=C.COLOR_SKIP)
+        if result._task.loop and 'results' in result._result:
+            self._process_items(result)
+        else:
+            msg = "skipping: [%s]" % result._host.get_name()
+            if self._run_is_verbose(result):
+                msg += " => %s" % self._dump_results(result._result)
+            self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_runner_on_unreachable(self, result):
         if self._last_task_banner != result._task._uuid:
@@ -271,11 +272,7 @@ class CallbackModule(CallbackBase):
             checkmsg = " [CHECK MODE]"
         else:
             checkmsg = ""
-        if not name:
-            msg = u"PLAY%s" % checkmsg
-        else:
-            msg = u"PLAY [%s]%s" % (name, checkmsg)
-
+        msg = 'PLAY%s' % checkmsg if not name else 'PLAY [%s]%s' % (name, checkmsg)
         self._play = play
 
         self._display.banner(msg)

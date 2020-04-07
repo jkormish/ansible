@@ -109,16 +109,13 @@ class HostVars(Mapping):
         return self._find_host(host_name) is not None
 
     def __iter__(self):
-        for host in self._inventory.hosts:
-            yield host
+        yield from self._inventory.hosts
 
     def __len__(self):
         return len(self._inventory.hosts)
 
     def __repr__(self):
-        out = {}
-        for host in self._inventory.hosts:
-            out[host] = self.get(host)
+        out = {host: self.get(host) for host in self._inventory.hosts}
         return repr(out)
 
     def __deepcopy__(self, memo):
@@ -136,16 +133,14 @@ class HostVarsVars(Mapping):
 
     def __getitem__(self, var):
         templar = Templar(variables=self._vars, loader=self._loader)
-        foo = templar.template(
-            self._vars[var], fail_on_undefined=False, static_vars=STATIC_VARS)
-        return foo
+        return templar.template(
+                self._vars[var], fail_on_undefined=False, static_vars=STATIC_VARS)
 
     def __contains__(self, var):
         return (var in self._vars)
 
     def __iter__(self):
-        for var in self._vars.keys():
-            yield var
+        yield from self._vars.keys()
 
     def __len__(self):
         return len(self._vars.keys())

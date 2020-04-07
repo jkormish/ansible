@@ -98,7 +98,7 @@ class UnsafeProxy(object):
 
 
 def _wrap_dict(v):
-    return dict((wrap_var(k), wrap_var(item)) for k, item in v.items())
+    return {wrap_var(k): wrap_var(item) for k, item in v.items()}
 
 
 def _wrap_sequence(v):
@@ -110,7 +110,7 @@ def _wrap_sequence(v):
 
 
 def _wrap_set(v):
-    return set(wrap_var(item) for item in v)
+    return {wrap_var(item) for item in v}
 
 
 def wrap_var(v):

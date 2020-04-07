@@ -57,11 +57,7 @@ def get_reserved_names(include_private=True):
     if 'loop' in private or 'loop' in public:
         public.add('with_')
 
-    if include_private:
-        result = public.union(private)
-    else:
-        result = public
-
+    result = public.union(private) if include_private else public
     return result
 
 

@@ -206,8 +206,7 @@ class PluginLoader:
         return self.format_paths(self._get_paths(subdirs=False))
 
     def _all_directories(self, dir):
-        results = []
-        results.append(dir)
+        results = [dir]
         for root, subdirs, files in os.walk(dir, followlinks=True):
             if '__init__.py' in files:
                 for x in subdirs:
@@ -499,7 +498,9 @@ class PluginLoader:
             alias_name = '_' + name
             # We've already cached all the paths at this point
             if alias_name in pull_cache:
-                if not ignore_deprecated and not os.path.islink(pull_cache[alias_name]):
+                if not (
+                    ignore_deprecated or os.path.islink(pull_cache[alias_name])
+                ):
                     # FIXME: this is not always the case, some are just aliases
                     display.deprecated('%s is kept for backwards compatibility but usage is discouraged. '  # pylint: disable=ansible-deprecated-no-version
                                        'The module documentation details page may explain more about this rationale.' % name.lstrip('_'))

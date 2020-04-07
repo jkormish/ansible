@@ -68,10 +68,7 @@ class LookupBase(AnsiblePlugin):
 
     @staticmethod
     def _flatten_hash_to_list(terms):
-        ret = []
-        for key in terms:
-            ret.append({'key': key, 'value': terms[key]})
-        return ret
+        return [{'key': key, 'value': terms[key]} for key in terms]
 
     @abstractmethod
     def run(self, terms, variables=None, **kwargs):

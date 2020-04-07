@@ -82,10 +82,13 @@ def strip_internal_keys(dirty, exceptions=None):
 
         # listify to avoid updating dict while iterating over it
         for k in list(dirty.keys()):
-            if isinstance(k, six.string_types):
-                if k.startswith('_ansible_') and k not in exceptions:
-                    del dirty[k]
-                    continue
+            if (
+                isinstance(k, six.string_types)
+                and k.startswith('_ansible_')
+                and k not in exceptions
+            ):
+                del dirty[k]
+                continue
 
             if isinstance(dirty[k], (MutableMapping, MutableSequence)):
                 strip_internal_keys(dirty[k], exceptions=exceptions)

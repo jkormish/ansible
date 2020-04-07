@@ -6,11 +6,7 @@ import sys
 
 from ansible.module_utils.six import PY2
 
-if PY2:
-    log_buffer = sys.stdout
-else:
-    log_buffer = sys.stdout.buffer
-
+log_buffer = sys.stdout if PY2 else sys.stdout.buffer
 env_vars = {
     'ANSIBLE_ROLES_PATH': './roles',
     'ANSIBLE_NOCOLOR': 'True',

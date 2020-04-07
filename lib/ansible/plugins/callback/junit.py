@@ -268,10 +268,7 @@ class CallbackModule(CallbackBase):
             else:
                 test_case.add_failure_info('rc=%s' % rc, dump)
         elif host_data.status == 'skipped':
-            if 'skip_reason' in res:
-                message = res['skip_reason']
-            else:
-                message = 'skipped'
+            message = res['skip_reason'] if 'skip_reason' in res else 'skipped'
             test_case.add_skipped_info(message)
 
         return test_case

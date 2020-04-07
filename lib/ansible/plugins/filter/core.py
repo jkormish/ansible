@@ -91,9 +91,7 @@ def to_bool(a):
         return a
     if isinstance(a, string_types):
         a = a.lower()
-    if a in ('yes', 'on', '1', 'true', 1):
-        return True
-    return False
+    return a in ('yes', 'on', '1', 'true', 1)
 
 
 def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
@@ -149,7 +147,7 @@ def regex_findall(value, regex, multiline=False, ignorecase=False):
 def regex_search(value, regex, *args, **kwargs):
     ''' Perform re.search and return the list of matches or a backref '''
 
-    groups = list()
+    groups = []
     for arg in args:
         if arg.startswith('\\g'):
             match = re.match(r'\\g<(\S+)>', arg).group(1)
@@ -171,10 +169,7 @@ def regex_search(value, regex, *args, **kwargs):
         if not groups:
             return match.group()
         else:
-            items = list()
-            for item in groups:
-                items.append(match.group(item))
-            return items
+            return [match.group(item) for item in groups]
 
 
 def ternary(value, true_val, false_val, none_val=None):
@@ -220,10 +215,7 @@ def from_yaml_all(data):
 
 @environmentfilter
 def rand(environment, end, start=None, step=None, seed=None):
-    if seed is None:
-        r = SystemRandom()
-    else:
-        r = Random(seed)
+    r = SystemRandom() if seed is None else Random(seed)
     if isinstance(end, integer_types):
         if not start:
             start = 0
@@ -551,10 +543,7 @@ def dict_to_list_of_dict_key_value_elements(mydict, key_name='key', value_name='
         raise AnsibleFilterError(
             "dict2items requires a dictionary, got %s instead." % type(mydict))
 
-    ret = []
-    for key in mydict:
-        ret.append({key_name: key, value_name: mydict[key]})
-    return ret
+    return [{key_name: key, value_name: mydict[key]} for key in mydict]
 
 
 def list_of_dict_key_value_elements_to_dict(mylist, key_name='key', value_name='value'):
@@ -565,7 +554,7 @@ def list_of_dict_key_value_elements_to_dict(mylist, key_name='key', value_name='
         raise AnsibleFilterError(
             "items2dict requires a list, got %s instead." % type(mylist))
 
-    return dict((item[key_name], item[value_name]) for item in mylist)
+    return {item[key_name]: item[value_name] for item in mylist}
 
 
 def path_join(paths):

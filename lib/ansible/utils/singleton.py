@@ -23,7 +23,6 @@ class Singleton(type):
             return cls.__instance
 
         with cls.__rlock:
-            if cls.__instance is None:
-                cls.__instance = super(Singleton, cls).__call__(*args, **kw)
+            cls.__instance = super(Singleton, cls).__call__(*args, **kw)
 
         return cls.__instance

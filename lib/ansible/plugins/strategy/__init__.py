@@ -184,12 +184,12 @@ class StrategyBase:
         self._cur_worker = 0
 
         # this dictionary is used to keep track of hosts that have
-        # outstanding tasks still in queue
-        self._blocked_hosts = dict()
+            # outstanding tasks still in queue
+        self._blocked_hosts = {}
 
         # this dictionary is used to keep track of hosts that have
-        # flushed handlers
-        self._flushed_hosts = dict()
+            # flushed handlers
+        self._flushed_hosts = {}
 
         self._results = deque()
         self._results_lock = threading.Condition(threading.Lock())
@@ -200,8 +200,8 @@ class StrategyBase:
         self._results_thread.start()
 
         # holds the list of active (persistent) connections to be shutdown at
-        # play completion
-        self._active_connections = dict()
+            # play completion
+        self._active_connections = {}
 
         # Caches for get_host calls, to avoid calling excessively
         # These values should be set at the top of the ``run`` method of each
@@ -739,27 +739,29 @@ class StrategyBase:
         Helper function to add a new host to inventory based on a task result.
         '''
 
-        if host_info:
-            host_name = host_info.get('host_name')
+        if not host_info:
+            return
 
-            # Check if host in inventory, add if not
-            if host_name not in self._inventory.hosts:
-                self._inventory.add_host(host_name, 'all')
-                self._hosts_cache_all.append(host_name)
-            new_host = self._inventory.hosts.get(host_name)
+        host_name = host_info.get('host_name')
 
-            # Set/update the vars for this host
-            new_host.vars = combine_vars(new_host.get_vars(), host_info.get('host_vars', dict()))
+        # Check if host in inventory, add if not
+        if host_name not in self._inventory.hosts:
+            self._inventory.add_host(host_name, 'all')
+            self._hosts_cache_all.append(host_name)
+        new_host = self._inventory.hosts.get(host_name)
 
-            new_groups = host_info.get('groups', [])
-            for group_name in new_groups:
-                if group_name not in self._inventory.groups:
-                    group_name = self._inventory.add_group(group_name)
-                new_group = self._inventory.groups[group_name]
-                new_group.add_host(self._inventory.hosts[host_name])
+        # Set/update the vars for this host
+        new_host.vars = combine_vars(new_host.get_vars(), host_info.get('host_vars', dict()))
 
-            # reconcile inventory, ensures inventory rules are followed
-            self._inventory.reconcile_inventory()
+        new_groups = host_info.get('groups', [])
+        for group_name in new_groups:
+            if group_name not in self._inventory.groups:
+                group_name = self._inventory.add_group(group_name)
+            new_group = self._inventory.groups[group_name]
+            new_group.add_host(self._inventory.hosts[host_name])
+
+        # reconcile inventory, ensures inventory rules are followed
+        self._inventory.reconcile_inventory()
 
     def _add_group(self, host, result_item):
         '''
@@ -1171,9 +1173,8 @@ class StrategyBase:
         for r in results:
             if 'args' in r._task_fields:
                 socket_path = r._task_fields['args'].get('_ansible_socket')
-                if socket_path:
-                    if r._host not in self._active_connections:
-                        self._active_connections[r._host] = socket_path
+                if socket_path and r._host not in self._active_connections:
+                    self._active_connections[r._host] = socket_path
 
 
 class NextAction(object):
@@ -1195,12 +1196,14 @@ class Debugger(cmd.Cmd):
 
         self.prompt = '[%s] %s (debug)> ' % (host, task)
         self.intro = None
-        self.scope = {}
-        self.scope['task'] = task
-        self.scope['task_vars'] = task_vars
-        self.scope['host'] = host
-        self.scope['play_context'] = play_context
-        self.scope['result'] = result
+        self.scope = {
+            'task': task,
+            'task_vars': task_vars,
+            'host': host,
+            'play_context': play_context,
+            'result': result,
+        }
+
         self.next_action = next_action
 
     def cmdloop(self):
@@ -1252,10 +1255,7 @@ class Debugger(cmd.Cmd):
             return eval(args, globals(), self.scope)
         except Exception:
             t, v = sys.exc_info()[:2]
-            if isinstance(t, str):
-                exc_type_name = t
-            else:
-                exc_type_name = t.__name__
+            exc_type_name = t if isinstance(t, str) else t.__name__
             display.display('***%s:%s' % (exc_type_name, repr(v)))
             raise
 
@@ -1275,10 +1275,7 @@ class Debugger(cmd.Cmd):
             exec(code, globals(), self.scope)
         except Exception:
             t, v = sys.exc_info()[:2]
-            if isinstance(t, str):
-                exc_type_name = t
-            else:
-                exc_type_name = t.__name__
+            exc_type_name = t if isinstance(t, str) else t.__name__
             display.display('***%s:%s' % (exc_type_name, repr(v)))
             raise
 

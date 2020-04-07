@@ -231,10 +231,10 @@ class PlayContext(Base):
                     setattr(new_info, attr, attr_val)
 
         # next, use the MAGIC_VARIABLE_MAPPING dictionary to update this
-        # connection info object with 'magic' variables from the variable list.
-        # If the value 'ansible_delegated_vars' is in the variables, it means
-        # we have a delegated-to host, so we check there first before looking
-        # at the variables in general
+            # connection info object with 'magic' variables from the variable list.
+            # If the value 'ansible_delegated_vars' is in the variables, it means
+            # we have a delegated-to host, so we check there first before looking
+            # at the variables in general
         if task.delegate_to is not None:
             # In the case of a loop, the delegated_to host may have been
             # templated based on the loop variable, so we try and locate
@@ -279,7 +279,7 @@ class PlayContext(Base):
             else:
                 delegated_vars['ansible_user'] = task.remote_user or self.remote_user
         else:
-            delegated_vars = dict()
+            delegated_vars = {}
 
             # setup shell
             for exe_var in C.MAGIC_VARIABLE_MAPPING.get('executable'):
@@ -314,8 +314,8 @@ class PlayContext(Base):
         # special overrides for the connection setting
         if len(delegated_vars) > 0:
             # in the event that we were using local before make sure to reset the
-            # connection type to the default transport for the delegated-to host,
-            # if not otherwise specified
+                    # connection type to the default transport for the delegated-to host,
+                    # if not otherwise specified
             for connection_type in C.MAGIC_VARIABLE_MAPPING.get('connection'):
                 if connection_type in delegated_vars:
                     break
@@ -325,7 +325,7 @@ class PlayContext(Base):
                     'inventory_hostname') in C.LOCALHOST
                 if remote_addr_local and inv_hostname_local:
                     setattr(new_info, 'connection', 'local')
-                elif getattr(new_info, 'connection', None) == 'local' and (not remote_addr_local or not inv_hostname_local):
+                elif getattr(new_info, 'connection', None) == 'local':
                     setattr(new_info, 'connection', C.DEFAULT_TRANSPORT)
 
         # if the final connection type is local, reset the remote_user value to that of the currently logged in user
@@ -360,7 +360,7 @@ class PlayContext(Base):
             version="2.12"
         )
 
-        if not cmd or not self.become:
+        if not (cmd and self.become):
             return cmd
 
         become_method = self.become_method

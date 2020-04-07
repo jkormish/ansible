@@ -32,7 +32,7 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
-            task_vars = dict()
+            task_vars = {}
 
         if 'msg' in self._task.args and 'var' in self._task.args:
             return {"failed": True, "msg": "'msg' and 'var' are incompatible options"}

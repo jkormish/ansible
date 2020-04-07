@@ -176,7 +176,7 @@ class SemanticVersion(Version):
                     extra_idx = idx
         version[:] = version[:extra_idx]
 
-        if version and set(type(v) for v in version) != set((int,)):
+        if version and {type(v) for v in version} != set((int,)):
             raise ValueError("Non integer values in %r" % loose_version)
 
         # Extra is everything to the right of the core version

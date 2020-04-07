@@ -44,12 +44,12 @@ REAL_FILE_ARGS = frozenset(FILE_COMMON_ARGUMENTS.keys()).union(
 
 def _create_remote_file_args(module_args):
     """remove keys that are not relevant to file"""
-    return dict((k, v) for k, v in module_args.items() if k in REAL_FILE_ARGS)
+    return {k: v for k, v in module_args.items() if k in REAL_FILE_ARGS}
 
 
 def _create_remote_copy_args(module_args):
     """remove action plugin only keys"""
-    return dict((k, v) for k, v in module_args.items() if k not in ('content', 'decrypt'))
+    return {k: v for k, v in module_args.items() if k not in ('content', 'decrypt')}
 
 
 def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detector=None):

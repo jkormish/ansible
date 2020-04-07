@@ -340,7 +340,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                         for dep in dep_chain:
                             dep_value = dep._attributes.get(attr, Sentinel)
                             value = self._extend_value(value, dep_value, prepend) if extend else dep_value
-                            if not (value is Sentinel or extend):
+                            if value is not Sentinel and not extend:
                                 break
                 except AttributeError:
                     pass

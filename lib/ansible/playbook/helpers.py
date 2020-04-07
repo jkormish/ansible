@@ -135,11 +135,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
             if action in ('include', 'import_tasks', 'include_tasks'):
 
-                if use_handlers:
-                    include_class = HandlerTaskInclude
-                else:
-                    include_class = TaskInclude
-
+                include_class = HandlerTaskInclude if use_handlers else TaskInclude
                 t = include_class.load(
                     task_ds,
                     block=block,

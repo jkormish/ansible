@@ -81,7 +81,7 @@ class CliconfBase(AnsiblePlugin):
     def __init__(self, connection):
         super(CliconfBase, self).__init__()
         self._connection = connection
-        self.history = list()
+        self.history = []
         self.response_logging = False
 
     def _alarm_handler(self, signum, frame):
@@ -154,7 +154,7 @@ class CliconfBase(AnsiblePlugin):
         """ Resets the history of run commands
         :return: None
         """
-        self.history = list()
+        self.history = []
 
     def enable_response_logging(self):
         """Enable logging command response"""
@@ -280,8 +280,7 @@ class CliconfBase(AnsiblePlugin):
             }
         :return: capability as json string
         """
-        result = {}
-        result['rpc'] = self.get_base_rpc()
+        result = {'rpc': self.get_base_rpc()}
         result['device_info'] = self.get_device_info()
         result['network_api'] = 'cliconf'
         return result
@@ -437,7 +436,7 @@ class CliconfBase(AnsiblePlugin):
 
     def check_edit_config_capability(self, operations, candidate=None, commit=True, replace=None, comment=None):
 
-        if not candidate and not replace:
+        if not (candidate or replace):
             raise ValueError(
                 "must provide a candidate or replace to load configuration")
 

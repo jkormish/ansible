@@ -96,7 +96,7 @@ class TestVariableManager(unittest.TestCase):
         })
 
         mock_play = MagicMock()
-        mock_play.get_vars.return_value = dict()
+        mock_play.get_vars.return_value = {}
         mock_play.get_roles.return_value = []
         mock_play.get_vars_files.return_value = [__file__]
 

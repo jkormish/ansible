@@ -55,7 +55,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         self._role_path = None
         self._role_collection = None
         self._role_basedir = role_basedir
-        self._role_params = dict()
+        self._role_params = {}
         self._collection_list = collection_list
 
     # def __repr__(self):
@@ -71,7 +71,11 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         if isinstance(ds, int):
             ds = "%s" % ds
 
-        if not isinstance(ds, dict) and not isinstance(ds, string_types) and not isinstance(ds, AnsibleBaseYAMLObject):
+        if not (
+            isinstance(ds, dict)
+            or isinstance(ds, string_types)
+            or isinstance(ds, AnsibleBaseYAMLObject)
+        ):
             raise AnsibleAssertionError()
 
         if isinstance(ds, dict):
@@ -121,7 +125,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
             return ds
 
         role_name = ds.get('role', ds.get('name'))
-        if not role_name or not isinstance(role_name, string_types):
+        if not (role_name and isinstance(role_name, string_types)):
             raise AnsibleError('role definitions must contain a role name', obj=ds)
 
         # if we have the required datastructures, and if the role_name
@@ -142,11 +146,11 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         '''
 
         # create a templar class to template the dependency names, in
-        # case they contain variables
+            # case they contain variables
         if self._variable_manager is not None:
             all_vars = self._variable_manager.get_vars(play=self._play)
         else:
-            all_vars = dict()
+            all_vars = {}
 
         templar = Templar(loader=self._loader, variables=all_vars)
         role_name = templar.template(role_name)
@@ -206,8 +210,8 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         them in a dictionary of params for parsing later
         '''
 
-        role_def = dict()
-        role_params = dict()
+        role_def = {}
+        role_params = {}
         base_attribute_names = frozenset(self._valid_attrs.keys())
         for (key, value) in iteritems(ds):
             # use the list of FieldAttribute values to determine what is and is not

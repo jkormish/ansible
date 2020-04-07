@@ -144,7 +144,7 @@ def convert_yaml_objects_to_native(obj):
     but instead checks for the types those objects inherit from, to offer more flexibility.
     """
     if isinstance(obj, dict):
-        return dict((k, convert_yaml_objects_to_native(v)) for k, v in obj.items())
+        return {k: convert_yaml_objects_to_native(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [convert_yaml_objects_to_native(v) for v in obj]
     elif isinstance(obj, text_type):
@@ -202,7 +202,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                 )
 
     def _load_file(self, file_name):
-        if not file_name or not isinstance(file_name, string_types):
+        if not (file_name and isinstance(file_name, string_types)):
             raise AnsibleParserError(
                 "Invalid filename: '%s'" % to_native(file_name))
 

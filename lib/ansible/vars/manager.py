@@ -108,19 +108,18 @@ class VariableManager:
             self._fact_cache = {}
 
     def __getstate__(self):
-        data = dict(
-            fact_cache=self._fact_cache,
-            np_fact_cache=self._nonpersistent_fact_cache,
-            vars_cache=self._vars_cache,
-            extra_vars=self._extra_vars,
-            host_vars_files=self._host_vars_files,
-            group_vars_files=self._group_vars_files,
-            omit_token=self._omit_token,
-            options_vars=self._options_vars,
-            inventory=self._inventory,
-            safe_basedir=self.safe_basedir,
-        )
-        return data
+        return dict(
+                fact_cache=self._fact_cache,
+                np_fact_cache=self._nonpersistent_fact_cache,
+                vars_cache=self._vars_cache,
+                extra_vars=self._extra_vars,
+                host_vars_files=self._host_vars_files,
+                group_vars_files=self._group_vars_files,
+                omit_token=self._omit_token,
+                options_vars=self._options_vars,
+                inventory=self._inventory,
+                safe_basedir=self.safe_basedir,
+            )
 
     def __setstate__(self, data):
         self._fact_cache = data.get('fact_cache', defaultdict(dict))
@@ -450,14 +449,18 @@ class VariableManager:
         which are special variables we set internally for use.
         '''
 
-        variables = {}
-        variables['playbook_dir'] = os.path.abspath(self._loader.get_basedir())
-        variables['ansible_playbook_python'] = sys.executable
-        variables['ansible_config_file'] = C.CONFIG_FILE
+        variables = {
+            'playbook_dir': os.path.abspath(self._loader.get_basedir()),
+            'ansible_playbook_python': sys.executable,
+            'ansible_config_file': C.CONFIG_FILE,
+        }
 
         if play:
             # This is a list of all role names of all dependencies for all roles for this play
-            dependency_role_names = list(set([d._role_name for r in play.roles for d in r.get_all_dependencies()]))
+            dependency_role_names = list(
+                {d._role_name for r in play.roles for d in r.get_all_dependencies()}
+            )
+
             # This is a list of all role names of all roles for this play
             play_role_names = [r._role_name for r in play.roles]
 
@@ -475,20 +478,16 @@ class VariableManager:
 
             variables['ansible_play_name'] = play.get_name()
 
-        if task:
-            if task._role:
-                variables['role_name'] = task._role.get_name()
-                variables['role_path'] = task._role._role_path
-                variables['role_uuid'] = text_type(task._role._uuid)
+        if task and task._role:
+            variables['role_name'] = task._role.get_name()
+            variables['role_path'] = task._role._role_path
+            variables['role_uuid'] = text_type(task._role._uuid)
 
         if self._inventory is not None:
             variables['groups'] = self._inventory.get_groups_dict()
             if play:
                 templar = Templar(loader=self._loader)
-                if templar.is_template(play.hosts):
-                    pattern = 'all'
-                else:
-                    pattern = play.hosts or 'all'
+                pattern = 'all' if templar.is_template(play.hosts) else play.hosts or 'all'
                 # add the list of hosts in the play, as adjusted for limit/filters
                 if not _hosts_all:
                     _hosts_all = [h.name for h in self._inventory.get_hosts(pattern=pattern, ignore_restrictions=True)]
@@ -550,7 +549,7 @@ class VariableManager:
             has_loop = False
             items = [None]
 
-        delegated_host_vars = dict()
+        delegated_host_vars = {}
         item_var = getattr(task.loop_control, 'loop_var', 'item')
         cache_items = False
         for item in items:
@@ -679,7 +678,7 @@ class VariableManager:
         Sets a value in the vars_cache for a host.
         '''
         if host not in self._vars_cache:
-            self._vars_cache[host] = dict()
+            self._vars_cache[host] = {}
         if varname in self._vars_cache[host] and isinstance(self._vars_cache[host][varname], MutableMapping) and isinstance(value, MutableMapping):
             self._vars_cache[host] = combine_vars(self._vars_cache[host], {varname: value})
         else:

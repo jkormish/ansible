@@ -72,11 +72,7 @@ class IncludeRole(TaskInclude):
     def get_block_list(self, play=None, variable_manager=None, loader=None):
 
         # only need play passed in when dynamic
-        if play is None:
-            myplay = self._parent._play
-        else:
-            myplay = play
-
+        myplay = self._parent._play if play is None else play
         ri = RoleInclude.load(self._role_name, play=myplay, variable_manager=variable_manager,
                               loader=loader, collection_list=self.collections)
         ri.vars.update(self.vars)

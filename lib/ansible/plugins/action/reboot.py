@@ -104,14 +104,13 @@ class ActionModule(ActionBase):
     def _get_value_from_facts(self, variable_name, distribution, default_value):
         """Get dist+version specific args first, then distribution, then family, lastly use default"""
         attr = getattr(self, variable_name)
-        value = attr.get(
-            distribution['name'] + distribution['version'],
-            attr.get(
-                distribution['name'],
+        return attr.get(
+                distribution['name'] + distribution['version'],
                 attr.get(
-                    distribution['family'],
-                    getattr(self, default_value))))
-        return value
+                    distribution['name'],
+                    attr.get(
+                        distribution['family'],
+                        getattr(self, default_value))))
 
     def get_shutdown_command_args(self, distribution):
         args = self._get_value_from_facts(

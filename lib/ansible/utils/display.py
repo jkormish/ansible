@@ -132,7 +132,7 @@ class Display(with_metaclass(Singleton, object)):
                 cmd = subprocess.Popen(
                     [self.b_cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (out, err) = cmd.communicate()
-                self.cows_available = set([to_text(c) for c in out.split()])
+                self.cows_available = {to_text(c) for c in out.split()}
                 if C.ANSIBLE_COW_WHITELIST and any(C.ANSIBLE_COW_WHITELIST):
                     self.cows_available = set(
                         C.ANSIBLE_COW_WHITELIST).intersection(self.cows_available)
@@ -164,11 +164,7 @@ class Display(with_metaclass(Singleton, object)):
         if not log_only:
 
             has_newline = msg.endswith(u'\n')
-            if has_newline:
-                msg2 = msg[:-1]
-            else:
-                msg2 = msg
-
+            msg2 = msg[:-1] if has_newline else msg
             if color:
                 msg2 = stringc(msg2, color)
 
@@ -185,12 +181,8 @@ class Display(with_metaclass(Singleton, object)):
                     stderr=stderr), errors='replace')
 
             # Note: After Display() class is refactored need to update the log capture
-            # code in 'bin/ansible-connection' (and other relevant places).
-            if not stderr:
-                fileobj = sys.stdout
-            else:
-                fileobj = sys.stderr
-
+                    # code in 'bin/ansible-connection' (and other relevant places).
+            fileobj = sys.stdout if not stderr else sys.stderr
             fileobj.write(msg2)
 
             try:
@@ -251,8 +243,8 @@ class Display(with_metaclass(Singleton, object)):
 
     def verbose(self, msg, host=None, caplevel=2):
 
-        to_stderr = C.VERBOSE_TO_STDERR
         if self.verbosity > caplevel:
+            to_stderr = C.VERBOSE_TO_STDERR
             if host is None:
                 self.display(msg, color=C.COLOR_VERBOSE, stderr=to_stderr)
             else:
@@ -262,7 +254,7 @@ class Display(with_metaclass(Singleton, object)):
     def deprecated(self, msg, version=None, removed=False):
         ''' used to print out a deprecation message.'''
 
-        if not removed and not C.DEPRECATION_WARNINGS:
+        if not (removed or C.DEPRECATION_WARNINGS):
             return
 
         if not removed:
@@ -390,7 +382,7 @@ class Display(with_metaclass(Singleton, object)):
             self.warning("Not prompting as we are not in interactive mode")
 
         # if result is false and default is not None
-        if not result and default is not None:
+        if not (result or default is None):
             result = default
 
         if encrypt:

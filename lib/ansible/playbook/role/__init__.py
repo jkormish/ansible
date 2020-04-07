@@ -101,7 +101,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         self._role_name = None
         self._role_path = None
         self._role_collection = None
-        self._role_params = dict()
+        self._role_params = {}
         self._loader = None
 
         self._metadata = None
@@ -111,10 +111,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         self._task_blocks = []
         self._handler_blocks = []
         self._compiled_handler_blocks = None
-        self._default_vars = dict()
-        self._role_vars = dict()
+        self._default_vars = {}
+        self._role_vars = {}
         self._had_task_run = dict()
-        self._completed = dict()
+        self._completed = {}
 
         if from_files is None:
             from_files = {}
@@ -137,10 +137,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         if from_files is None:
             from_files = {}
         try:
-            # The ROLE_CACHE is a dictionary of role names, with each entry
-            # containing another dictionary corresponding to a set of parameters
-            # specified for a role as the key and the Role() object itself.
-            # We use frozenset to make the dictionary hashable.
+                # The ROLE_CACHE is a dictionary of role names, with each entry
+                # containing another dictionary corresponding to a set of parameters
+                # specified for a role as the key and the Role() object itself.
+                # We use frozenset to make the dictionary hashable.
 
             params = role_include.get_role_params()
             if role_include.when is not None:
@@ -171,7 +171,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             r._load_role_data(role_include, parent_role=parent_role)
 
             if role_include.role not in play.ROLE_CACHE:
-                play.ROLE_CACHE[role_include.role] = dict()
+                play.ROLE_CACHE[role_include.role] = {}
 
             # FIXME: how to handle cache keys for collection-based roles, since they're technically adjustable per task?
             play.ROLE_CACHE[role_include.role][hashed_params] = r
@@ -207,7 +207,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         self._role_vars = self._load_role_yaml(
             'vars', main=self._from_files.get('vars'), allow_dir=True)
         if self._role_vars is None:
-            self._role_vars = dict()
+            self._role_vars = {}
         elif not isinstance(self._role_vars, dict):
             raise AnsibleParserError(
                 "The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
@@ -215,7 +215,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         self._default_vars = self._load_role_yaml(
             'defaults', main=self._from_files.get('defaults'), allow_dir=True)
         if self._default_vars is None:
-            self._default_vars = dict()
+            self._default_vars = {}
         elif not isinstance(self._default_vars, dict):
             raise AnsibleParserError(
                 "The defaults/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
@@ -253,7 +253,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         if self.collections:
             # default append collection is core for collection-hosted roles, legacy for others
             default_append_collection = 'ansible.builtin' if self._role_collection else 'ansible.legacy'
-            if 'ansible.builtin' not in self.collections and 'ansible.legacy' not in self.collections:
+            if not (
+                'ansible.builtin' in self.collections
+                or 'ansible.legacy' in self.collections
+            ):
                 self.collections.append(default_append_collection)
 
         task_data = self._load_role_yaml(
@@ -296,10 +299,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 data = {}
                 for found in found_files:
                     new_data = self._loader.load_from_file(found)
-                    if new_data and allow_dir:
-                        data = combine_vars(data, new_data)
-                    else:
-                        data = new_data
+                    data = combine_vars(data, new_data) if new_data and allow_dir else new_data
                 return data
             elif main is not None:
                 raise AnsibleParserError(
@@ -336,7 +336,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
     def get_default_vars(self, dep_chain=None):
         dep_chain = [] if dep_chain is None else dep_chain
 
-        default_vars = dict()
+        default_vars = {}
         for dep in self.get_all_dependencies():
             default_vars = combine_vars(default_vars, dep.get_default_vars())
         if dep_chain:
@@ -348,7 +348,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
     def get_inherited_vars(self, dep_chain=None):
         dep_chain = [] if dep_chain is None else dep_chain
 
-        inherited_vars = dict()
+        inherited_vars = {}
 
         if dep_chain:
             for parent in dep_chain:
@@ -489,14 +489,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             res['_metadata'] = self._metadata.serialize()
 
         if include_deps:
-            deps = []
-            for role in self.get_direct_dependencies():
-                deps.append(role.serialize())
+            deps = [role.serialize() for role in self.get_direct_dependencies()]
             res['_dependencies'] = deps
 
-        parents = []
-        for parent in self._parents:
-            parents.append(parent.serialize(include_deps=False))
+        parents = [parent.serialize(include_deps=False) for parent in self._parents]
         res['_parents'] = parents
 
         return res

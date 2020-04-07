@@ -23,7 +23,7 @@ except ImportError:
     from urllib.request import urlopen
 
 
-def main():  # type: () -> None
+def main():    # type: () -> None
     """Main entry point."""
     repo_full_name = os.environ['REPO_FULL_NAME']
     required_repo_full_name = 'ansible/ansible'
@@ -72,7 +72,13 @@ def main():  # type: () -> None
         fail('Shippable run %s has %d jobs instead of the expected %d jobs.' % (run_id, len(jobs), len(defined_matrix)),
              'Try re-running the entire matrix.%s' % hint)
 
-    actual_matrix = dict((job.get('jobNumber'), dict(tuple(line.split('=', 1)) for line in job.get('env', [])).get('T', '')) for job in jobs)
+    actual_matrix = {
+        job.get('jobNumber'): dict(
+            tuple(line.split('=', 1)) for line in job.get('env', [])
+        ).get('T', '')
+        for job in jobs
+    }
+
     errors = [(job_number, test, actual_matrix.get(job_number)) for job_number, test in enumerate(defined_matrix, 1) if actual_matrix.get(job_number) != test]
 
     if len(errors):

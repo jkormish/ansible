@@ -90,11 +90,7 @@ class CSVReader:
     """
 
     def __init__(self, f, dialect=csv.excel, encoding='utf-8', **kwds):
-        if PY2:
-            f = CSVRecoder(f, encoding)
-        else:
-            f = codecs.getreader(encoding)(f)
-
+        f = CSVRecoder(f, encoding) if PY2 else codecs.getreader(encoding)(f)
         self.reader = csv.reader(f, dialect=dialect, **kwds)
 
     def __next__(self):

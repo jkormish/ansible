@@ -112,12 +112,9 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
-        anydict = False
         skip = False
 
-        for term in terms:
-            if isinstance(term, dict):
-                anydict = True
+        anydict = any(isinstance(term, dict) for term in terms)
 
         total_search = []
         if anydict:
@@ -129,19 +126,16 @@ class LookupModule(LookupBase):
                     skip = boolean(term.get('skip', False), strict=False)
 
                     filelist = files
-                    if isinstance(files, string_types):
+                    if isinstance(filelist, string_types):
                         files = files.replace(',', ' ')
                         files = files.replace(';', ' ')
                         filelist = files.split(' ')
-
                     pathlist = paths
-                    if paths:
-                        if isinstance(paths, string_types):
-                            paths = paths.replace(',', ' ')
-                            paths = paths.replace(':', ' ')
-                            paths = paths.replace(';', ' ')
-                            pathlist = paths.split(' ')
-
+                    if pathlist and isinstance(pathlist, string_types):
+                        paths = paths.replace(',', ' ')
+                        paths = paths.replace(':', ' ')
+                        paths = paths.replace(';', ' ')
+                        pathlist = paths.split(' ')
                     if not pathlist:
                         total_search = filelist
                     else:

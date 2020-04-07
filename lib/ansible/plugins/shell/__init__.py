@@ -93,23 +93,20 @@ class ShellBase(AnsiblePlugin):
         return path.endswith('/')
 
     def chmod(self, paths, mode):
-        cmd = ['chmod', mode]
-        cmd.extend(paths)
+        cmd = ['chmod', mode, *paths]
         cmd = [shlex_quote(c) for c in cmd]
 
         return ' '.join(cmd)
 
     def chown(self, paths, user):
-        cmd = ['chown', user]
-        cmd.extend(paths)
+        cmd = ['chown', user, *paths]
         cmd = [shlex_quote(c) for c in cmd]
 
         return ' '.join(cmd)
 
     def set_user_facl(self, paths, user, mode):
         """Only sets acls for users as that's really all we need"""
-        cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode)]
-        cmd.extend(paths)
+        cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode), *paths]
         cmd = [shlex_quote(c) for c in cmd]
 
         return ' '.join(cmd)
@@ -200,15 +197,11 @@ class ShellBase(AnsiblePlugin):
             cmd = shlex_quote(cmd)
 
         cmd_parts = []
-        if shebang:
-            shebang = shebang.replace("#!", "").strip()
-        else:
-            shebang = ""
+        shebang = shebang.replace('#!', '').strip() if shebang else ''
         cmd_parts.extend([env_string.strip(), shebang, cmd])
         if arg_path is not None:
             cmd_parts.append(arg_path)
-        new_cmd = " ".join(cmd_parts)
-        return new_cmd
+        return " ".join(cmd_parts)
 
     def append_command(self, cmd, cmd_to_append):
         """Append an additional command if supported by the shell"""

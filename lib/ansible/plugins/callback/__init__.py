@@ -63,11 +63,7 @@ class CallbackBase(AnsiblePlugin):
     '''
 
     def __init__(self, display=None, options=None):
-        if display:
-            self._display = display
-        else:
-            self._display = global_display
-
+        self._display = display if display else global_display
         if self._display.verbosity >= 4:
             name = getattr(self, 'CALLBACK_NAME', 'unnamed')
             ctype = getattr(self, 'CALLBACK_TYPE', 'old')

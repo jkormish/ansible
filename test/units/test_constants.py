@@ -47,9 +47,7 @@ level1_one = 'data_level1_one'
 
 @pytest.fixture
 def user():
-    user = {}
-    user['uid'] = os.geteuid()
-
+    user = {'uid': os.geteuid()}
     pwd_entry = pwd.getpwuid(user['uid'])
     user['username'] = pwd_entry.pw_name
     user['home'] = pwd_entry.pw_dir
@@ -70,7 +68,7 @@ def cfg_file():
 @pytest.fixture
 def null_cfg_file():
     old_cfg_file = constants.CONFIG_FILE
-    del constants.CONFIG_FILE
+    del old_cfg_file
     yield
 
     constants.CONFIG_FILE = old_cfg_file

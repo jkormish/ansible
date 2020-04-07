@@ -151,13 +151,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     def _remote_file_exists(self, path):
         cmd = self._connection._shell.exists(path)
         result = self._low_level_execute_command(cmd=cmd, sudoable=True)
-        if result['rc'] == 0:
-            return True
-        return False
-
-    def _configure_module(self, module_name, module_args, task_vars=None):
-        '''
-        Handles the loading and templating of the module code through the
+        return result['rc'] == 0
         modify_module() function.
         '''
         if task_vars is None:
@@ -242,10 +236,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
     def _compute_environment_string(self, raw_environment_out=None):
         '''
+    def _compute_environment_string(self, raw_environment_out=None):
+        '''
         Builds the environment string to be used when executing the remote task.
         '''
 
-        final_environment = dict()
+        final_environment = {}
         if self._task.environment is not None:
             environments = self._task.environment
             if not isinstance(environments, list):
@@ -265,7 +261,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # these environment settings should not need to merge sub-dicts
                 final_environment.update(temp_environment)
 
-        if len(final_environment) > 0:
+        if final_environment:
             final_environment = self._templar.template(final_environment)
 
         if isinstance(raw_environment_out, dict):
@@ -273,13 +269,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             raw_environment_out.update(final_environment)
 
         return self._connection._shell.env_prefix(**final_environment)
-
-    def _early_needs_tmp_path(self):
-        '''
-        Determines if a tmp path should be created before the action is executed.
-        '''
-
-        return getattr(self, 'TRANSFERS_FILES', False)
 
     def _is_pipelining_enabled(self, module_style, wrap_async=False):
         '''
@@ -579,24 +568,21 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         Issue a remote chmod command
         '''
         cmd = self._connection._shell.chmod(paths, mode)
-        res = self._low_level_execute_command(cmd, sudoable=sudoable)
-        return res
+        return self._low_level_execute_command(cmd, sudoable=sudoable)
 
     def _remote_chown(self, paths, user, sudoable=False):
         '''
         Issue a remote chown command
         '''
         cmd = self._connection._shell.chown(paths, user)
-        res = self._low_level_execute_command(cmd, sudoable=sudoable)
-        return res
+        return self._low_level_execute_command(cmd, sudoable=sudoable)
 
     def _remote_set_user_facl(self, paths, user, mode, sudoable=False):
         '''
         Issue a remote call to setfacl
         '''
         cmd = self._connection._shell.set_user_facl(paths, user, mode)
-        res = self._low_level_execute_command(cmd, sudoable=sudoable)
-        return res
+        return self._low_level_execute_command(cmd, sudoable=sudoable)
 
     def _execute_remote_stat(self, path, all_vars, follow, tmp=None, checksum=True):
         '''
@@ -709,11 +695,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             cmd = self._connection._shell.pwd()
             pwd = self._low_level_execute_command(
                 cmd, sudoable=False).get('stdout', '').strip()
-            if pwd:
-                expanded = pwd
-            else:
-                expanded = path
-
+            expanded = pwd if pwd else path
         elif len(split_path) > 1:
             expanded = self._connection._shell.join_path(
                 initial_fragment, *split_path[1:])

@@ -118,7 +118,7 @@ def _parse_parameters(term):
     if len(first_split) <= 1:
         # Only a single argument given, therefore it's a path
         relpath = term
-        params = dict()
+        params = {}
     else:
         relpath = first_split[0]
         params = parse_kv(first_split[1])
@@ -244,7 +244,7 @@ def _format_content(password, salt, encrypt=None):
     .. warning:: Passwords are saved in clear.  This is because the playbooks
         expect to get cleartext passwords from this lookup.
     """
-    if not encrypt and not salt:
+    if not (encrypt or salt):
         return password
 
     # At this point, the calling code should have assured us that there is a salt value.
