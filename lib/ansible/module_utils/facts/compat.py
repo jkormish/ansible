@@ -83,6 +83,4 @@ def ansible_facts(module, gather_subset=None):
                                                 gather_timeout=gather_timeout,
                                                 minimal_gather_subset=minimal_gather_subset)
 
-    facts_dict = fact_collector.collect(module=module)
-
-    return facts_dict
+    return fact_collector.collect(module=module)

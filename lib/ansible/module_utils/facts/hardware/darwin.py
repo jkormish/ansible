@@ -53,7 +53,7 @@ class DarwinHardware(Hardware):
         rc, out, err = self.module.run_command(["/usr/sbin/system_profiler", "SPHardwareDataType"])
         if rc != 0:
             return dict()
-        system_profile = dict()
+        system_profile = {}
         for line in out.splitlines():
             if ': ' in line:
                 (key, value) = line.split(': ', 1)
@@ -89,8 +89,6 @@ class DarwinHardware(Hardware):
             'memfree_mb': 0,
         }
 
-        total_used = 0
-        page_size = 4096
         try:
             vm_stat_command = get_bin_path('vm_stat')
         except ValueError:
@@ -104,7 +102,7 @@ class DarwinHardware(Hardware):
             memory_stats = (line.rstrip('.').split(':', 1) for line in out.splitlines())
 
             # Strip extra left spaces from the value
-            memory_stats = dict((k, v.lstrip()) for k, v in memory_stats)
+            memory_stats = {k: v.lstrip() for k, v in memory_stats}
 
             for k, v in memory_stats.items():
                 try:
@@ -114,6 +112,8 @@ class DarwinHardware(Hardware):
                     # not convert to an integer, just leave it alone.
                     pass
 
+            total_used = 0
+            page_size = 4096
             if memory_stats.get('Pages wired down'):
                 total_used += memory_stats['Pages wired down'] * page_size
             if memory_stats.get('Pages active'):

@@ -117,7 +117,7 @@ class TaskInclude(Task):
         if self.action != 'include':
             all_vars = super(TaskInclude, self).get_vars()
         else:
-            all_vars = dict()
+            all_vars = {}
             if self._parent:
                 all_vars.update(self._parent.get_vars())
 

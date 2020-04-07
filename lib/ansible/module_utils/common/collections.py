@@ -97,7 +97,4 @@ def count(seq):
     """
     if not is_iterable(seq):
         raise Exception('Argument provided  is not an iterable')
-    counters = dict()
-    for elem in seq:
-        counters[elem] = counters.get(elem, 0) + 1
-    return counters
+    return {elem: counters.get(elem, 0) + 1 for elem in seq}

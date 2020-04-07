@@ -25,7 +25,7 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
-            task_vars = dict()
+            task_vars = {}
 
         if self._task.environment and any(self._task.environment):
             self._display.warning(

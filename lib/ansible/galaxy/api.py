@@ -51,7 +51,10 @@ def g_connect(versions):
                 error_context_msg = 'Error when finding available api versions from %s (%s)' % (
                     self.name, n_url)
 
-                if self.api_server == 'https://galaxy.ansible.com' or self.api_server == 'https://galaxy.ansible.com/':
+                if self.api_server in [
+                    'https://galaxy.ansible.com',
+                    'https://galaxy.ansible.com/',
+                ]:
                     n_url = 'https://galaxy.ansible.com/api/'
 
                 try:
@@ -243,8 +246,7 @@ class GalaxyAPI:
         args = urlencode({"github_token": github_token})
         resp = open_url(url, data=args, validate_certs=self.validate_certs,
                         method="POST", http_agent=user_agent())
-        data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
-        return data
+        return json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
 
     @g_connect(['v1'])
     def create_import_task(self, github_user, github_repo, reference=None, role_name=None):
@@ -350,10 +352,7 @@ class GalaxyAPI:
             url = _urljoin(
                 self.api_server, self.available_api_versions['v1'], what, "?page_size")
             data = self._call_galaxy(url)
-            if "results" in data:
-                results = data['results']
-            else:
-                results = data
+            results = data['results'] if 'results' in data else data
             done = True
             if "next" in data:
                 done = (data.get('next_link', None) is None)
@@ -365,7 +364,8 @@ class GalaxyAPI:
             return results
         except Exception as error:
             raise AnsibleError(
-                "Failed to download the %s list: %s" % (what, to_native(error)))
+                'Failed to download the %s list: %s' % (what, to_native(error))
+            )
 
     @g_connect(['v1'])
     def search_roles(self, search, **kwargs):
@@ -396,8 +396,7 @@ class GalaxyAPI:
         if author:
             search_url += '&username_autocomplete=%s' % author
 
-        data = self._call_galaxy(search_url)
-        return data
+        return self._call_galaxy(search_url)
 
     @g_connect(['v1'])
     def add_secret(self, source, github_user, github_repo, secret):
@@ -409,29 +408,25 @@ class GalaxyAPI:
             "github_repo": github_repo,
             "secret": secret
         })
-        data = self._call_galaxy(url, args=args, method="POST")
-        return data
+        return self._call_galaxy(url, args=args, method="POST")
 
     @g_connect(['v1'])
     def list_secrets(self):
         url = _urljoin(
             self.api_server, self.available_api_versions['v1'], "notification_secrets")
-        data = self._call_galaxy(url, auth_required=True)
-        return data
+        return self._call_galaxy(url, auth_required=True)
 
     @g_connect(['v1'])
     def remove_secret(self, secret_id):
         url = _urljoin(
             self.api_server, self.available_api_versions['v1'], "notification_secrets", secret_id) + '/'
-        data = self._call_galaxy(url, auth_required=True, method='DELETE')
-        return data
+        return self._call_galaxy(url, auth_required=True, method='DELETE')
 
     @g_connect(['v1'])
     def delete_role(self, github_user, github_repo):
         url = _urljoin(self.api_server, self.available_api_versions['v1'], "removerole",
                        "?github_user=%s&github_repo=%s" % (github_user, github_repo))
-        data = self._call_galaxy(url, auth_required=True, method='DELETE')
-        return data
+        return self._call_galaxy(url, auth_required=True, method='DELETE')
 
     # Collection APIs #
 

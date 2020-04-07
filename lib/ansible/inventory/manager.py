@@ -333,11 +333,12 @@ class InventoryManager(object):
                     if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
                         raise AnsibleError(
                             u'Completely failed to parse inventory source %s' % (source))
-        if not parsed:
-            if source != '/etc/ansible/hosts' or os.path.exists(source):
-                # only warn if NOT using the default and if using it, only if the file is present
-                display.warning(
-                    "Unable to parse %s as an inventory source" % source)
+        if not parsed and (
+            source != '/etc/ansible/hosts' or os.path.exists(source)
+        ):
+            # only warn if NOT using the default and if using it, only if the file is present
+            display.warning(
+                "Unable to parse %s as an inventory source" % source)
 
         # clear up, jic
         self._inventory.current_source = None
@@ -384,11 +385,7 @@ class InventoryManager(object):
         hosts = []
 
         # Check if pattern already computed
-        if isinstance(pattern, list):
-            pattern_list = pattern[:]
-        else:
-            pattern_list = [pattern]
-
+        pattern_list = pattern[:] if isinstance(pattern, list) else [pattern]
         if pattern_list:
             if not ignore_limits and self._subset:
                 pattern_list.extend(self._subset)
@@ -408,8 +405,7 @@ class InventoryManager(object):
                 # mainly useful for hostvars[host] access
                 if not ignore_limits and self._subset:
                     # exclude hosts not in a subset, if defined
-                    subset_uuids = set(
-                        s._uuid for s in self._evaluate_patterns(self._subset))
+                    subset_uuids = {s._uuid for s in self._evaluate_patterns(self._subset)}
                     hosts[:] = [h for h in hosts if h._uuid in subset_uuids]
 
                 if not ignore_restrictions and self._restriction:
@@ -457,7 +453,7 @@ class InventoryManager(object):
                     that = set(that)
                     hosts = [h for h in hosts if h in that]
                 else:
-                    existing_hosts = set(y.name for y in hosts)
+                    existing_hosts = {y.name for y in hosts}
                     hosts.extend(
                         [h for h in that if h.name not in existing_hosts])
         return hosts
@@ -555,7 +551,7 @@ class InventoryManager(object):
         hosts based on the subscript (which may be None to return all hosts).
         """
 
-        if not hosts or not subscript:
+        if not (hosts and subscript):
             return hosts
 
         (start, end) = subscript
@@ -595,14 +591,14 @@ class InventoryManager(object):
                 results.append(implicit)
 
         # Display warning if specified host pattern did not match any groups or hosts
-        if not results and not matching_groups and pattern != 'all':
+        if not (results or matching_groups or pattern == 'all'):
             msg = "Could not match supplied host pattern, ignoring: %s" % pattern
             display.debug(msg)
-            if C.HOST_PATTERN_MISMATCH == 'warning':
-                display.warning(msg)
-            elif C.HOST_PATTERN_MISMATCH == 'error':
+            if C.HOST_PATTERN_MISMATCH == 'error':
                 raise AnsibleError(msg)
-            # no need to write 'ignore' state
+            elif C.HOST_PATTERN_MISMATCH == 'warning':
+                display.warning(msg)
+                # no need to write 'ignore' state
 
         return results
 
@@ -612,7 +608,7 @@ class InventoryManager(object):
         result = [h for h in self.get_hosts(pattern)]
 
         # allow implicit localhost if pattern matches and no other results
-        if len(result) == 0 and pattern in C.LOCALHOST:
+        if not result and pattern in C.LOCALHOST:
             result = [pattern]
 
         return result
@@ -631,7 +627,7 @@ class InventoryManager(object):
             return
         elif not isinstance(restriction, list):
             restriction = [restriction]
-        self._restriction = set(to_text(h.name) for h in restriction)
+        self._restriction = {to_text(h.name) for h in restriction}
 
     def subset(self, subset_pattern):
         """

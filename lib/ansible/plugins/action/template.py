@@ -29,18 +29,18 @@ class ActionModule(ActionBase):
         ''' handler for template operations '''
 
         if task_vars is None:
-            task_vars = dict()
+            task_vars = {}
 
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
         # Options type validation
-        # stings
+            # stings
         for s_type in ('src', 'dest', 'state', 'newline_sequence', 'variable_start_string', 'variable_end_string', 'block_start_string',
-                       'block_end_string'):
+                           'block_end_string'):
             if s_type in self._task.args:
                 value = ensure_type(self._task.args[s_type], 'string')
-                if value is not None and not isinstance(value, string_types):
+                if not (value is None or isinstance(value, string_types)):
                     raise AnsibleActionFail(
                         "%s is expected to be a string, but got %s instead" % (s_type, type(value)))
                 self._task.args[s_type] = value

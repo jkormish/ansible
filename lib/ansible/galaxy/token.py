@@ -90,9 +90,7 @@ class KeycloakToken(object):
         return self._token
 
     def headers(self):
-        headers = {}
-        headers['Authorization'] = '%s %s' % (self.token_type, self.get())
-        return headers
+        return {'Authorization': '%s %s' % (self.token_type, self.get())}
 
 
 class GalaxyToken(object):
@@ -177,6 +175,4 @@ class BasicAuthToken(object):
         return self._token
 
     def headers(self):
-        headers = {}
-        headers['Authorization'] = '%s %s' % (self.token_type, self.get())
-        return headers
+        return {'Authorization': '%s %s' % (self.token_type, self.get())}

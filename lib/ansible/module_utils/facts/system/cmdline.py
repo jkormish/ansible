@@ -35,10 +35,7 @@ class CmdLineFactCollector(BaseFactCollector):
         try:
             for piece in shlex.split(data, posix=False):
                 item = piece.split('=', 1)
-                if len(item) == 1:
-                    cmdline_dict[item[0]] = True
-                else:
-                    cmdline_dict[item[0]] = item[1]
+                cmdline_dict[item[0]] = True if len(item) == 1 else item[1]
         except ValueError:
             pass
 

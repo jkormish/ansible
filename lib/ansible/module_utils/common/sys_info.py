@@ -51,16 +51,16 @@ def get_distribution_version():
     '''
     version = None
 
-    needs_best_version = frozenset((
-        u'centos',
-        u'debian',
-    ))
-
     if platform.system() == 'Linux':
         version = distro.version()
         distro_id = distro.id()
 
         if version is not None:
+            needs_best_version = frozenset((
+                u'centos',
+                u'debian',
+            ))
+
             if distro_id in needs_best_version:
                 version_best = distro.version(best=True)
 

@@ -40,8 +40,8 @@ class ActionModule(ActionBase):
                     'Ignoring filter(%s) for %s' % (fact_filter, fact_module))
 
         # Strip out keys with ``None`` values, effectively mimicking ``omit`` behavior
-        # This ensures we don't pass a ``None`` value as an argument expecting a specific type
-        mod_args = dict((k, v) for k, v in mod_args.items() if v is not None)
+            # This ensures we don't pass a ``None`` value as an argument expecting a specific type
+        mod_args = {k: v for k, v in mod_args.items() if v is not None}
 
         # handle module defaults
         mod_args = get_action_args_with_defaults(
@@ -106,9 +106,7 @@ class ActionModule(ActionBase):
                     module_name=fact_module, module_args=mod_args, task_vars=task_vars, wrap_async=True))
 
             while jobs:
-                for module in jobs:
-                    poll_args = {'jid': jobs[module]['ansible_job_id'], '_async_dir': os.path.dirname(
-                        jobs[module]['results_file'])}
+                for module, poll_args in jobs.items():
                     res = self._execute_module(
                         module_name='async_status', module_args=poll_args, task_vars=task_vars, wrap_async=False)
                     if res.get('finished', 0) == 1:

@@ -55,8 +55,8 @@ class DataLoader:
         self._basedir = '.'
 
         # NOTE: not effective with forks as the main copy does not get updated.
-        # avoids rereading files
-        self._FILE_CACHE = dict()
+            # avoids rereading files
+        self._FILE_CACHE = {}
 
         # NOTE: not thread safe, also issues with forks not returning data to main proc
         #       so they need to be cleaned independantly. See WorkerProcess for example.
@@ -152,7 +152,7 @@ class DataLoader:
         :raises AnsibleParserError: if we were unable to read the file
         :return: Returns a byte string of the file contents
         '''
-        if not file_name or not isinstance(file_name, (binary_type, text_type)):
+        if not (file_name and isinstance(file_name, (binary_type, text_type))):
             raise AnsibleParserError("Invalid filename: '%s'" % to_native(file_name))
 
         b_file_name = to_bytes(self.path_dwim(file_name))
@@ -349,11 +349,11 @@ class DataLoader:
         Temporary files are cleanup in the destructor
         """
 
-        if not file_path or not isinstance(file_path, (binary_type, text_type)):
+        if not (file_path and isinstance(file_path, (binary_type, text_type))):
             raise AnsibleParserError("Invalid filename: '%s'" % to_native(file_path))
 
         b_file_path = to_bytes(file_path, errors='surrogate_or_strict')
-        if not self.path_exists(b_file_path) or not self.is_file(b_file_path):
+        if not (self.path_exists(b_file_path) and self.is_file(b_file_path)):
             raise AnsibleFileNotFound(file_name=file_path)
 
         real_path = self.path_dwim(file_path)
@@ -440,7 +440,7 @@ class DataLoader:
     def _get_dir_vars_files(self, path, extensions):
         found = []
         for spath in sorted(self.list_directory(path)):
-            if not spath.startswith(u'.') and not spath.endswith(u'~'):  # skip hidden and backups
+            if not (spath.startswith(u'.') or spath.endswith(u'~')):    # skip hidden and backups
 
                 ext = os.path.splitext(spath)[-1]
                 full_spath = os.path.join(path, spath)

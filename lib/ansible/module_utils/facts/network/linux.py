@@ -249,7 +249,7 @@ class LinuxNetwork(Network):
                             default_ipv6['macaddress'] = macaddress
                             default_ipv6['mtu'] = interfaces[device]['mtu']
                             default_ipv6['type'] = interfaces[device].get("type", "unknown")
-                        if not address == '::1':
+                        if address != '::1':
                             ips['all_ipv6_addresses'].append(address)
 
             ip_path = self.module.get_bin_path("ip")

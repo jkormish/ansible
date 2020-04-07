@@ -87,9 +87,8 @@ def is_executable(path):
 
 
 def format_attributes(attributes):
-    attribute_list = [FILE_ATTRIBUTES.get(
-        attr) for attr in attributes if attr in FILE_ATTRIBUTES]
-    return attribute_list
+    return [FILE_ATTRIBUTES.get(
+            attr) for attr in attributes if attr in FILE_ATTRIBUTES]
 
 
 def get_flags_from_attributes(attributes):
@@ -98,17 +97,16 @@ def get_flags_from_attributes(attributes):
 
 
 def get_file_arg_spec():
-    arg_spec = dict(
-        mode=dict(type='raw'),
-        owner=dict(),
-        group=dict(),
-        seuser=dict(),
-        serole=dict(),
-        selevel=dict(),
-        setype=dict(),
-        attributes=dict(aliases=['attr']),
-    )
-    return arg_spec
+    return dict(
+            mode=dict(type='raw'),
+            owner=dict(),
+            group=dict(),
+            seuser=dict(),
+            serole=dict(),
+            selevel=dict(),
+            setype=dict(),
+            attributes=dict(aliases=['attr']),
+        )
 
 
 class LockTimeout(Exception):
@@ -154,7 +152,6 @@ class FileLock:
         '''
         lock_path = os.path.join(
             tmpdir, 'ansible-{0}.lock'.format(os.path.basename(path)))
-        l_wait = 0.1
         r_exception = IOError
         if sys.version_info[0] == 3:
             r_exception = BlockingIOError
@@ -168,6 +165,7 @@ class FileLock:
 
         if lock_timeout:
             e_secs = 0
+            l_wait = 0.1
             while e_secs < lock_timeout:
                 try:
                     fcntl.flock(self.lockfd, fcntl.LOCK_EX | fcntl.LOCK_NB)

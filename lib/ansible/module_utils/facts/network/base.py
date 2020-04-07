@@ -65,6 +65,4 @@ class NetworkCollector(BaseFactCollector):
         # Network munges cached_facts by side effect, so give it a copy
         facts_obj = self._fact_class(module)
 
-        facts_dict = facts_obj.populate(collected_facts=collected_facts)
-
-        return facts_dict
+        return facts_obj.populate(collected_facts=collected_facts)

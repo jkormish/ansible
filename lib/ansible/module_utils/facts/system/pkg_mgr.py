@@ -46,10 +46,7 @@ class OpenBSDPkgMgrFactCollector(BaseFactCollector):
     _platform = 'OpenBSD'
 
     def collect(self, module=None, collected_facts=None):
-        facts_dict = {}
-
-        facts_dict['pkg_mgr'] = 'openbsd_pkg'
-        return facts_dict
+        return {'pkg_mgr': 'openbsd_pkg'}
 
 
 # the fact ends up being 'pkg_mgr' so stick with that naming/spelling

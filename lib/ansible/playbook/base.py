@@ -181,7 +181,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 self._attr_defaults[key] = value()
 
         # and init vars, avoid using defaults in field declaration as it lives across plays
-        self.vars = dict()
+        self.vars = {}
 
     def dump_me(self, depth=0):
         ''' this is never called from production code, it is here to be used when debugging as a 'complex print' '''
@@ -218,11 +218,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         self._variable_manager = variable_manager
 
         # the data loader class is used to parse data from strings and files
-        if loader is not None:
-            self._loader = loader
-        else:
-            self._loader = DataLoader()
-
+        self._loader = loader if loader is not None else DataLoader()
         # call the preprocess_data() function to massage the data into
         # something we can more easily parse, and then call the validation
         # function on it to ensure there are no incorrect key values
@@ -230,7 +226,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         self._validate_attributes(ds)
 
         # Walk all attributes in the class. We sort them based on their priority
-        # so that certain fields can be loaded before others, if they are dependent.
+            # so that certain fields can be loaded before others, if they are dependent.
         for name, attr in sorted(iteritems(self._valid_attrs), key=operator.itemgetter(1)):
             # copy the value over unless a _load_field method is defined
             target_name = name
@@ -238,11 +234,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 target_name = self._alias_attrs[name]
             if name in ds:
                 method = getattr(self, '_load_%s' % name, None)
-                if method:
-                    self._attributes[target_name] = method(name, ds[name])
-                else:
-                    self._attributes[target_name] = ds[name]
-
+                self._attributes[target_name] = method(name, ds[name]) if method else ds[name]
         # run early, non-critical validation
         self.validate()
 
@@ -300,12 +292,15 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 else:
                     # and make sure the attribute is of the type it should be
                     value = self._attributes[name]
-                    if value is not None:
-                        if attribute.isa == 'string' and isinstance(value, (list, dict)):
-                            raise AnsibleParserError(
-                                "The field '%s' is supposed to be a string type,"
-                                " however the incoming data structure is a %s" % (name, type(value)), obj=self.get_ds()
-                            )
+                    if (
+                        value is not None
+                        and attribute.isa == 'string'
+                        and isinstance(value, (list, dict))
+                    ):
+                        raise AnsibleParserError(
+                            "The field '%s' is supposed to be a string type,"
+                            " however the incoming data structure is a %s" % (name, type(value)), obj=self.get_ds()
+                        )
 
         self._validated = True
 
@@ -530,11 +525,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         value[:] = [v for v in value if v is not Sentinel]
         new_value[:] = [v for v in new_value if v is not Sentinel]
 
-        if prepend:
-            combined = new_value + value
-        else:
-            combined = value + new_value
-
+        combined = new_value + value if prepend else value + new_value
         return [i for i, _ in itertools.groupby(combined) if i is not None]
 
     def dump_attrs(self):

@@ -191,13 +191,10 @@ class BaseFileCacheModule(BaseCacheModule):
         try:
             st = os.stat(cachefile)
         except (OSError, IOError) as e:
-            if e.errno == errno.ENOENT:
-                return False
-            else:
+            if e.errno != errno.ENOENT:
                 display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (
                     self.plugin_name, cachefile, to_bytes(e)))
-                return False
-
+            return False
         if time.time() - st.st_mtime <= self._timeout:
             return False
 
@@ -206,11 +203,11 @@ class BaseFileCacheModule(BaseCacheModule):
         return True
 
     def keys(self):
-        keys = []
-        for k in os.listdir(self._cache_dir):
-            if not (k.startswith('.') or self.has_expired(k)):
-                keys.append(k)
-        return keys
+        return [
+            k
+            for k in os.listdir(self._cache_dir)
+            if not ((k.startswith('.') or self.has_expired(k)))
+        ]
 
     def contains(self, key):
         cachefile = "%s/%s" % (self._cache_dir, key)
@@ -246,10 +243,7 @@ class BaseFileCacheModule(BaseCacheModule):
             self.delete(key)
 
     def copy(self):
-        ret = dict()
-        for key in self.keys():
-            ret[key] = self.get(key)
-        return ret
+        return {key: self.get(key) for key in self.keys()}
 
     @abstractmethod
     def _load(self, filepath):
@@ -322,10 +316,19 @@ class CachePluginAdjudicator(MutableMapping):
 
     def _do_load_key(self, key):
         load = False
-        if key not in self._cache and key not in self._retrieved and self._plugin_name != 'memory':
-            if isinstance(self._plugin, BaseFileCacheModule):
+        if isinstance(self._plugin, BaseFileCacheModule):
+            if not (
+                key in self._cache
+                or key in self._retrieved
+                or self._plugin_name == 'memory'
+            ):
                 load = True
-            elif not isinstance(self._plugin, BaseFileCacheModule) and self._plugin.contains(key):
+        elif self._plugin.contains(key):
+            if not (
+                key in self._cache
+                or key in self._retrieved
+                or self._plugin_name == 'memory'
+            ):
                 # Database-backed caches don't raise KeyError for expired keys, so only load if the key is valid by checking contains()
                 load = True
         return load

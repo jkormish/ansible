@@ -33,7 +33,7 @@ class ActionModule(ActionBase):
             self.matcher = None
 
         if not self.ignore_files:
-            self.ignore_files = list()
+            self.ignore_files = []
 
         if isinstance(self.ignore_files, string_types):
             self.ignore_files = self.ignore_files.split()
@@ -50,7 +50,7 @@ class ActionModule(ActionBase):
         self.return_results_as_name = self._task.args.get('name', None)
         self.source_dir = self._task.args.get('dir', None)
         self.source_file = self._task.args.get('file', None)
-        if not self.source_dir and not self.source_file:
+        if not (self.source_dir or self.source_file):
             self.source_file = self._task.args.get('_raw_params')
             if self.source_file:
                 self.source_file = self.source_file.rstrip('\n')
@@ -76,7 +76,7 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         if task_vars is None:
-            task_vars = dict()
+            task_vars = {}
 
         self.show_content = True
         self.included_files = []
@@ -85,12 +85,12 @@ class ActionModule(ActionBase):
         dirs = 0
         files = 0
         for arg in self._task.args:
+            if arg in self.VALID_ALL:
+                continue
             if arg in self.VALID_DIR_ARGUMENTS:
                 dirs += 1
             elif arg in self.VALID_FILE_ARGUMENTS:
                 files += 1
-            elif arg in self.VALID_ALL:
-                pass
             else:
                 raise AnsibleError(
                     '{0} is not a valid option in include_vars'.format(to_native(arg)))
@@ -102,7 +102,7 @@ class ActionModule(ActionBase):
         # set internal vars from args
         self._set_args()
 
-        results = dict()
+        results = {}
         if self.source_dir:
             self._set_dir_defaults()
             self._set_root_dir()
@@ -135,8 +135,7 @@ class ActionModule(ActionBase):
                 err_msg = to_native(e)
 
         if self.return_results_as_name:
-            scope = dict()
-            scope[self.return_results_as_name] = results
+            scope = {self.return_results_as_name: results}
             results = scope
 
         result = super(ActionModule, self).run(task_vars=task_vars)
@@ -224,7 +223,7 @@ class ActionModule(ActionBase):
         Returns:
             Tuple (bool, str, dict)
         """
-        results = dict()
+        results = {}
         failed = False
         err_msg = ''
         if validate_extensions and not self._is_valid_file_ext(filename):
@@ -239,7 +238,7 @@ class ActionModule(ActionBase):
             data = self._loader.load(
                 data, file_name=filename, show_content=show_content)
             if not data:
-                data = dict()
+                data = {}
             if not isinstance(data, dict):
                 failed = True
                 err_msg = (
@@ -259,23 +258,23 @@ class ActionModule(ActionBase):
         Returns:
             Tuple (bool, str, dict)
         """
-        results = dict()
+        results = {}
         failed = False
         err_msg = ''
         for filename in var_files:
             stop_iter = False
             # Never include main.yml from a role, as that is the default included by the role
-            if self._task._role:
-                if path.join(self._task._role._role_path, filename) == path.join(root_dir, 'vars', 'main.yml'):
-                    stop_iter = True
-                    continue
+            if self._task._role and path.join(
+                self._task._role._role_path, filename
+            ) == path.join(root_dir, 'vars', 'main.yml'):
+                stop_iter = True
+                continue
 
             filepath = path.join(root_dir, filename)
-            if self.files_matching:
-                if not self.matcher.search(filename):
-                    stop_iter = True
+            if self.files_matching and not self.matcher.search(filename):
+                stop_iter = True
 
-            if not stop_iter and not failed:
+            if not (stop_iter or failed):
                 if self.ignore_unknown_extensions:
                     if path.exists(filepath) and not self._ignore_file(filename) and self._is_valid_file_ext(filename):
                         failed, err_msg, loaded_data = self._load_files(

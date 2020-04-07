@@ -51,10 +51,9 @@ class HPUXNetwork(Network):
         lines = out.splitlines()
         for line in lines:
             words = line.split()
-            if len(words) > 1:
-                if words[0] == 'default':
-                    default_interfaces['default_interface'] = words[4]
-                    default_interfaces['default_gateway'] = words[1]
+            if len(words) > 1 and words[0] == 'default':
+                default_interfaces['default_interface'] = words[4]
+                default_interfaces['default_gateway'] = words[1]
 
         return default_interfaces
 

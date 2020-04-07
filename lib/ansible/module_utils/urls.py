@@ -223,7 +223,7 @@ if not HAS_MATCH_HOSTNAME:
                 "%s." % repr(dn))
 
         hostname_leftmost, sep, hostname_remainder = hostname.partition('.')
-        if not hostname_leftmost or not sep:
+        if not (hostname_leftmost and sep):
             # wildcard must match at least one char
             return False
         return dn_remainder.lower() == hostname_remainder.lower()
@@ -242,11 +242,7 @@ if not HAS_MATCH_HOSTNAME:
             raise ValueError("%s must be an all-ascii string." % repr(ipname))
 
         # Set ipname in native string format
-        if sys.version_info < (3,):
-            n_ipname = b_ipname
-        else:
-            n_ipname = ipname
-
+        n_ipname = b_ipname if sys.version_info < (3, ) else ipname
         if n_ipname.count('.') == 3:
             try:
                 return socket.inet_aton(n_ipname)
@@ -708,8 +704,13 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True, ca_path=N
             else:
                 # Do not preserve payload and filter headers
                 data = None
-                headers = dict((k, v) for k, v in req.headers.items()
-                               if k.lower() not in ("content-length", "content-type", "transfer-encoding"))
+                headers = {
+                    k: v
+                    for k, v in req.headers.items()
+                    if k.lower()
+                    not in ("content-length", "content-type", "transfer-encoding")
+                }
+
 
                 # http://tools.ietf.org/html/rfc7231#section-6.4.4
                 if code == 303 and method != 'HEAD':
@@ -750,7 +751,7 @@ def build_ssl_validation_error(hostname, port, paths, exc=None):
                    ' python >= 2.7.9 on your managed machine')
         msg.append(' (the python executable used (%s) is version: %s)' %
                    (sys.executable, ''.join(sys.version.splitlines())))
-        if not HAS_URLLIB3_PYOPENSSLCONTEXT and not HAS_URLLIB3_SSL_WRAP_SOCKET:
+        if not (HAS_URLLIB3_PYOPENSSLCONTEXT or HAS_URLLIB3_SSL_WRAP_SOCKET):
             msg.append('or you can install the `urllib3`, `pyOpenSSL`,'
                        ' `ndg-httpsclient`, and `pyasn1` python modules')
 
@@ -918,11 +919,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
     def make_context(self, cafile, cadata):
         cafile = self.ca_path or cafile
-        if self.ca_path:
-            cadata = None
-        else:
-            cadata = cadata or None
-
+        cadata = None if self.ca_path else cadata or None
         if HAS_SSLCONTEXT:
             context = create_default_context(cafile=cafile)
         elif HAS_URLLIB3_PYOPENSSLCONTEXT:
@@ -1198,7 +1195,7 @@ class Request:
                 handlers.append(authhandler)
                 handlers.append(digest_authhandler)
 
-            elif username and force_basic_auth:
+            elif username:
                 headers["Authorization"] = basic_auth_header(username, password)
 
             else:

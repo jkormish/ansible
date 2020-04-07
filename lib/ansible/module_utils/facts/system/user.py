@@ -31,9 +31,7 @@ class UserFactCollector(BaseFactCollector):
                      'effective_group_ids'])
 
     def collect(self, module=None, collected_facts=None):
-        user_facts = {}
-
-        user_facts['user_id'] = getpass.getuser()
+        user_facts = {'user_id': getpass.getuser()}
 
         pwent = pwd.getpwnam(getpass.getuser())
 

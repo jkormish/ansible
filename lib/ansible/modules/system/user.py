@@ -516,39 +516,40 @@ class User(object):
 
     def check_password_encrypted(self):
         # Darwin needs cleartext password, so skip validation
-        if self.module.params['password'] and self.platform != 'Darwin':
-            maybe_invalid = False
+        if not self.module.params['password'] or self.platform == 'Darwin':
+            return
+        maybe_invalid = False
 
-            # Allow setting certain passwords in order to disable the account
-            if self.module.params['password'] in set(['*', '!', '*************']):
-                maybe_invalid = False
+        # Allow setting certain passwords in order to disable the account
+        if self.module.params['password'] in set(['*', '!', '*************']):
+            maybe_invalid = False
+        else:
+            # : for delimiter, * for disable user, ! for lock user
+            # these characters are invalid in the password
+            if any(char in self.module.params['password'] for char in ':*!'):
+                maybe_invalid = True
+            if '$' not in self.module.params['password']:
+                maybe_invalid = True
             else:
-                # : for delimiter, * for disable user, ! for lock user
-                # these characters are invalid in the password
-                if any(char in self.module.params['password'] for char in ':*!'):
-                    maybe_invalid = True
-                if '$' not in self.module.params['password']:
-                    maybe_invalid = True
-                else:
-                    fields = self.module.params['password'].split("$")
-                    if len(fields) >= 3:
-                        # contains character outside the crypto constraint
-                        if bool(_HASH_RE.search(fields[-1])):
-                            maybe_invalid = True
-                        # md5
-                        if fields[1] == '1' and len(fields[-1]) != 22:
-                            maybe_invalid = True
-                        # sha256
-                        if fields[1] == '5' and len(fields[-1]) != 43:
-                            maybe_invalid = True
-                        # sha512
-                        if fields[1] == '6' and len(fields[-1]) != 86:
-                            maybe_invalid = True
-                    else:
+                fields = self.module.params['password'].split("$")
+                if len(fields) >= 3:
+                    # contains character outside the crypto constraint
+                    if bool(_HASH_RE.search(fields[-1])):
                         maybe_invalid = True
-            if maybe_invalid:
-                self.module.warn("The input password appears not to have been hashed. "
-                                 "The 'password' argument must be encrypted for this module to work properly.")
+                    # md5
+                    if fields[1] == '1' and len(fields[-1]) != 22:
+                        maybe_invalid = True
+                    # sha256
+                    if fields[1] == '5' and len(fields[-1]) != 43:
+                        maybe_invalid = True
+                    # sha512
+                    if fields[1] == '6' and len(fields[-1]) != 86:
+                        maybe_invalid = True
+                else:
+                    maybe_invalid = True
+        if maybe_invalid:
+            self.module.warn("The input password appears not to have been hashed. "
+                             "The 'password' argument must be encrypted for this module to work properly.")
 
     def execute_command(self, cmd, use_unsafe_shell=False, data=None, obey_checkmode=True):
         if self.module.check_mode and obey_checkmode:
@@ -564,11 +565,7 @@ class User(object):
             return self.module.backup_local(self.SHADOWFILE)
 
     def remove_user_userdel(self):
-        if self.local:
-            command_name = 'luserdel'
-        else:
-            command_name = 'userdel'
-
+        command_name = 'luserdel' if self.local else 'userdel'
         cmd = [self.module.get_bin_path(command_name, True)]
         if self.force and not self.local:
             cmd.append('-f')
@@ -689,11 +686,7 @@ class User(object):
     def _check_usermod_append(self):
         # check if this version of usermod can append groups
 
-        if self.local:
-            command_name = 'lusermod'
-        else:
-            command_name = 'usermod'
-
+        command_name = 'lusermod' if self.local else 'usermod'
         usermod_path = self.module.get_bin_path(command_name, True)
 
         # for some reason, usermod --help cannot be used by non root
@@ -707,11 +700,7 @@ class User(object):
 
         # check if --append exists
         lines = to_native(helpout).split('\n')
-        for line in lines:
-            if line.strip().startswith('-a, --append'):
-                return True
-
-        return False
+        return any(line.strip().startswith('-a, --append') for line in lines)
 
     def modify_user_usermod(self):
 
@@ -874,7 +863,7 @@ class User(object):
         if self.groups is None:
             return None
         info = self.user_info()
-        groups = set(x.strip() for x in self.groups.split(',') if x)
+        groups = {x.strip() for x in self.groups.split(',') if x}
         for g in groups.copy():
             if not self.group_exists(g):
                 self.module.fail_json(msg="Group %s does not exist" % (g))
@@ -939,7 +928,7 @@ class User(object):
         if not self.user_exists():
             return False
         info = self.get_pwd_info()
-        if len(info[1]) == 1 or len(info[1]) == 0:
+        if len(info[1]) in [1, 0]:
             info[1] = self.user_password()[0]
         return info
 
@@ -984,7 +973,7 @@ class User(object):
         if os.path.isabs(self.ssh_file):
             ssh_key_file = self.ssh_file
         else:
-            if not os.path.exists(info[5]) and not self.module.check_mode:
+            if not (os.path.exists(info[5]) or self.module.check_mode):
                 raise Exception('User %s home directory does not exist' % self.name)
             ssh_key_file = os.path.join(info[5], self.ssh_file)
         return ssh_key_file
@@ -1011,8 +1000,7 @@ class User(object):
                 overwrite = 'y'
             else:
                 return (None, 'Key already exists, use "force: yes" to overwrite', '')
-        cmd = [self.module.get_bin_path('ssh-keygen', True)]
-        cmd.append('-t')
+        cmd = [self.module.get_bin_path('ssh-keygen', True), '-t']
         cmd.append(self.ssh_type)
         if self.ssh_bits > 0:
             cmd.append('-b')
@@ -1040,10 +1028,10 @@ class User(object):
                                      env=env)
                 out_buffer = b''
                 err_buffer = b''
+                second_prompt = b'Enter same passphrase again'
                 while p.poll() is None:
                     r, w, e = select.select([master_out_fd, master_err_fd], [], [], 1)
                     first_prompt = b'Enter passphrase (empty for no passphrase):'
-                    second_prompt = b'Enter same passphrase again'
                     prompt = first_prompt
                     for fd in r:
                         if fd == master_out_fd:
@@ -1066,7 +1054,7 @@ class User(object):
                 out = to_native(out_buffer)
                 err = to_native(err_buffer)
             except OSError as e:
-                return (1, '', to_native(e))
+                return 1, '', to_native(e)
         else:
             cmd.append('-N')
             cmd.append('')
@@ -1084,9 +1072,7 @@ class User(object):
         ssh_key_file = self.get_ssh_key_path()
         if not os.path.exists(ssh_key_file):
             return (1, 'SSH Key file %s does not exist' % ssh_key_file, '')
-        cmd = [self.module.get_bin_path('ssh-keygen', True)]
-        cmd.append('-l')
-        cmd.append('-f')
+        cmd = [self.module.get_bin_path('ssh-keygen', True), '-l', '-f']
         cmd.append(ssh_key_file)
 
         return self.execute_command(cmd, obey_checkmode=False)
@@ -1113,34 +1099,31 @@ class User(object):
         return self.modify_user_usermod()
 
     def create_homedir(self, path):
-        if not os.path.exists(path):
-            if self.skeleton is not None:
-                skeleton = self.skeleton
-            else:
-                skeleton = '/etc/skel'
-
-            if os.path.exists(skeleton):
-                try:
-                    shutil.copytree(skeleton, path, symlinks=True)
-                except OSError as e:
-                    self.module.exit_json(failed=True, msg="%s" % to_native(e))
-            else:
-                try:
-                    os.makedirs(path)
-                except OSError as e:
-                    self.module.exit_json(failed=True, msg="%s" % to_native(e))
-            # get umask from /etc/login.defs and set correct home mode
-            if os.path.exists(self.LOGIN_DEFS):
-                with open(self.LOGIN_DEFS, 'r') as f:
-                    for line in f:
-                        m = re.match(r'^UMASK\s+(\d+)$', line)
-                        if m:
-                            umask = int(m.group(1), 8)
-                            mode = 0o777 & ~umask
-                            try:
-                                os.chmod(path, mode)
-                            except OSError as e:
-                                self.module.exit_json(failed=True, msg="%s" % to_native(e))
+        if os.path.exists(path):
+            return
+        skeleton = self.skeleton if self.skeleton is not None else '/etc/skel'
+        if os.path.exists(skeleton):
+            try:
+                shutil.copytree(skeleton, path, symlinks=True)
+            except OSError as e:
+                self.module.exit_json(failed=True, msg="%s" % to_native(e))
+        else:
+            try:
+                os.makedirs(path)
+            except OSError as e:
+                self.module.exit_json(failed=True, msg="%s" % to_native(e))
+        # get umask from /etc/login.defs and set correct home mode
+        if os.path.exists(self.LOGIN_DEFS):
+            with open(self.LOGIN_DEFS, 'r') as f:
+                for line in f:
+                    m = re.match(r'^UMASK\s+(\d+)$', line)
+                    if m:
+                        umask = int(m.group(1), 8)
+                        mode = 0o777 & ~umask
+                        try:
+                            os.chmod(path, mode)
+                        except OSError as e:
+                            self.module.exit_json(failed=True, msg="%s" % to_native(e))
 
     def chown_homedir(self, uid, gid, path):
         try:
@@ -2177,10 +2160,7 @@ class DarwinUser(User):
     def __modify_group(self, group, action):
         '''Add or remove SELF.NAME to or from GROUP depending on ACTION.
         ACTION can be 'add' or 'remove' otherwise 'remove' is assumed. '''
-        if action == 'add':
-            option = '-a'
-        else:
-            option = '-d'
+        option = '-a' if action == 'add' else '-d'
         cmd = ['dseditgroup', '-o', 'edit', option, self.name, '-t', 'user', group]
         (rc, out, err) = self.execute_command(cmd)
         if rc != 0:
@@ -2198,11 +2178,7 @@ class DarwinUser(User):
         changed = False
 
         current = set(self._list_user_groups())
-        if self.groups is not None:
-            target = set(self.groups.split(','))
-        else:
-            target = set([])
-
+        target = set(self.groups.split(',')) if self.groups is not None else set([])
         if self.append is False:
             for remove in current - target:
                 (_rc, _err, _out) = self.__modify_group(remove, 'delete')
@@ -2279,10 +2255,9 @@ class DarwinUser(User):
         if rc != 0:
             self.module.fail_json(msg='Cannot delete user "%s".' % self.name, err=err, out=out, rc=rc)
 
-        if self.force:
-            if os.path.exists(info[5]):
-                shutil.rmtree(info[5])
-                out += "Removed %s" % info[5]
+        if self.force and os.path.exists(info[5]):
+            shutil.rmtree(info[5])
+            out += "Removed %s" % info[5]
 
         return (rc, out, err)
 
@@ -2733,9 +2708,7 @@ class BusyBox(User):
     """
 
     def create_user(self):
-        cmd = [self.module.get_bin_path('adduser', True)]
-
-        cmd.append('-D')
+        cmd = [self.module.get_bin_path('adduser', True), '-D']
 
         if self.uid is not None:
             cmd.append('-u')
@@ -2777,8 +2750,7 @@ class BusyBox(User):
             self.module.fail_json(name=self.name, msg=err, rc=rc)
 
         if self.password is not None:
-            cmd = [self.module.get_bin_path('chpasswd', True)]
-            cmd.append('--encrypted')
+            cmd = [self.module.get_bin_path('chpasswd', True), '--encrypted']
             data = '{name}:{password}'.format(name=self.name, password=self.password)
             rc, out, err = self.execute_command(cmd, data=data)
 
@@ -2833,7 +2805,7 @@ class BusyBox(User):
                             self.module.fail_json(name=self.name, msg=err, rc=rc)
 
                 for g in group_diff:
-                    if g not in groups and not self.append:
+                    if not ((g in groups or self.append)):
                         remove_cmd = [remove_cmd_bin, self.name, g]
                         rc, out, err = self.execute_command(remove_cmd)
                         if rc is not None and rc != 0:
@@ -2841,8 +2813,7 @@ class BusyBox(User):
 
         # Manage password
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
-            cmd = [self.module.get_bin_path('chpasswd', True)]
-            cmd.append('--encrypted')
+            cmd = [self.module.get_bin_path('chpasswd', True), '--encrypted']
             data = '{name}:{password}'.format(name=self.name, password=self.password)
             rc, out, err = self.execute_command(cmd, data=data)
 
@@ -2923,9 +2894,7 @@ def main():
     rc = None
     out = ''
     err = ''
-    result = {}
-    result['name'] = user.name
-    result['state'] = user.state
+    result = {'name': user.name, 'state': user.state}
     if user.state == 'absent':
         if user.user_exists():
             if module.check_mode:
@@ -2936,7 +2905,12 @@ def main():
             result['force'] = user.force
             result['remove'] = user.remove
     elif user.state == 'present':
-        if not user.user_exists():
+        if user.user_exists():
+            # modify user (note: this function is check mode aware)
+            (rc, out, err) = user.modify_user()
+            result['append'] = user.append
+            result['move_home'] = user.move_home
+        else:
             if module.check_mode:
                 module.exit_json(changed=True)
 
@@ -2962,20 +2936,12 @@ def main():
             else:
                 result['system'] = user.system
                 result['create_home'] = user.create_home
-        else:
-            # modify user (note: this function is check mode aware)
-            (rc, out, err) = user.modify_user()
-            result['append'] = user.append
-            result['move_home'] = user.move_home
         if rc is not None and rc != 0:
             module.fail_json(name=user.name, msg=err, rc=rc)
         if user.password is not None:
             result['password'] = 'NOT_LOGGING_PASSWORD'
 
-    if rc is None:
-        result['changed'] = False
-    else:
-        result['changed'] = True
+    result['changed'] = False if rc is None else True
     if out:
         result['stdout'] = out
     if err:
@@ -3013,10 +2979,7 @@ def main():
             if rc == 0:
                 result['changed'] = True
             (rc, out, err) = user.ssh_key_fingerprint()
-            if rc == 0:
-                result['ssh_fingerprint'] = out.strip()
-            else:
-                result['ssh_fingerprint'] = err.strip()
+            result['ssh_fingerprint'] = out.strip() if rc == 0 else err.strip()
             result['ssh_key_file'] = user.get_ssh_key_path()
             result['ssh_public_key'] = user.get_ssh_public_key()
 

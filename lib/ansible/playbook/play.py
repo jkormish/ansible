@@ -215,10 +215,7 @@ class Play(Base, Taggable, CollectionSearch):
             raise AnsibleParserError(
                 "A malformed role declaration was encountered.", obj=self._ds, orig_exc=e)
 
-        roles = []
-        for ri in role_includes:
-            roles.append(Role.load(ri, play=self))
-
+        roles = [Role.load(ri, play=self) for ri in role_includes]
         self.roles[:0] = roles
 
         return self.roles
@@ -292,9 +289,8 @@ class Play(Base, Taggable, CollectionSearch):
             loader=self._loader
         )
 
-        block_list = []
+        block_list = list(self.pre_tasks)
 
-        block_list.extend(self.pre_tasks)
         block_list.append(flush_block)
         block_list.extend(self._compile_roles())
         block_list.extend(self.tasks)
@@ -332,9 +328,7 @@ class Play(Base, Taggable, CollectionSearch):
     def serialize(self):
         data = super(Play, self).serialize()
 
-        roles = []
-        for role in self.get_roles():
-            roles.append(role.serialize())
+        roles = [role.serialize() for role in self.get_roles()]
         data['roles'] = roles
         data['included_path'] = self._included_path
 

@@ -55,10 +55,7 @@ class Host:
         return self.get_name()
 
     def serialize(self):
-        groups = []
-        for group in self.groups:
-            groups.append(group.serialize())
-
+        groups = [group.serialize() for group in self.groups]
         return dict(
             name=self.name,
             vars=self.vars.copy(),
@@ -147,9 +144,11 @@ class Host:
         return self.groups
 
     def get_magic_vars(self):
-        results = {}
-        results['inventory_hostname'] = self.name
-        results['inventory_hostname_short'] = self.name.split('.')[0]
+        results = {
+            'inventory_hostname': self.name,
+            'inventory_hostname_short': self.name.split('.')[0],
+        }
+
         results['group_names'] = sorted(
             [g.name for g in self.get_groups() if g.name != 'all'])
 

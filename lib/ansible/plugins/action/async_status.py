@@ -24,7 +24,7 @@ class ActionModule(ActionBase):
 
         env_async_dir = [e for e in self._task.environment if
                          "ANSIBLE_ASYNC_DIR" in e]
-        if len(env_async_dir) > 0:
+        if env_async_dir:
             # for backwards compatibility we need to get the dir from
             # ANSIBLE_ASYNC_DIR that is defined in the environment. This is
             # deprecated and will be removed in favour of shell options

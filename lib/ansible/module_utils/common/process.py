@@ -21,10 +21,7 @@ def get_bin_path(arg, opt_dirs=None, required=None):
     opt_dirs = [] if opt_dirs is None else opt_dirs
 
     sbin_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
-    paths = []
-    for d in opt_dirs:
-        if d is not None and os.path.exists(d):
-            paths.append(d)
+    paths = [d for d in opt_dirs if d is not None and os.path.exists(d)]
     paths += os.environ.get('PATH', '').split(os.pathsep)
     bin_path = None
     # mangle PATH to include /sbin dirs

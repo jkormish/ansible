@@ -35,18 +35,19 @@ class PythonFactCollector(BaseFactCollector):
     _fact_ids = set()
 
     def collect(self, module=None, collected_facts=None):
-        python_facts = {}
-        python_facts['python'] = {
-            'version': {
-                'major': sys.version_info[0],
-                'minor': sys.version_info[1],
-                'micro': sys.version_info[2],
-                'releaselevel': sys.version_info[3],
-                'serial': sys.version_info[4]
-            },
-            'version_info': list(sys.version_info),
-            'executable': sys.executable,
-            'has_sslcontext': HAS_SSLCONTEXT
+        python_facts = {
+            'python': {
+                'version': {
+                    'major': sys.version_info[0],
+                    'minor': sys.version_info[1],
+                    'micro': sys.version_info[2],
+                    'releaselevel': sys.version_info[3],
+                    'serial': sys.version_info[4],
+                },
+                'version_info': list(sys.version_info),
+                'executable': sys.executable,
+                'has_sslcontext': HAS_SSLCONTEXT,
+            }
         }
 
         try:

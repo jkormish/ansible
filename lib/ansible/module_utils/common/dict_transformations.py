@@ -68,8 +68,8 @@ def snake_dict_to_camel_dict(snake_dict, capitalize_first=False):
                 new_type[_snake_to_camel(key, capitalize_first)] = camelize(
                     complex_type[key], capitalize_first)
         elif isinstance(complex_type, list):
-            for i in range(len(complex_type)):
-                new_type.append(camelize(complex_type[i], capitalize_first))
+            for item in complex_type:
+                new_type.append(camelize(item, capitalize_first))
         else:
             return complex_type
         return new_type
@@ -126,8 +126,8 @@ def dict_merge(a, b):
 
 
 def recursive_diff(dict1, dict2):
-    left = dict((k, v) for (k, v) in dict1.items() if k not in dict2)
-    right = dict((k, v) for (k, v) in dict2.items() if k not in dict1)
+    left = {k: v for (k, v) in dict1.items() if k not in dict2}
+    right = {k: v for (k, v) in dict2.items() if k not in dict1}
     for k in (set(dict1.keys()) & set(dict2.keys())):
         if isinstance(dict1[k], dict) and isinstance(dict2[k], dict):
             result = recursive_diff(dict1[k], dict2[k])

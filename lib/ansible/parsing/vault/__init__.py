@@ -123,9 +123,7 @@ def is_encrypted(data):
         # Similarly, if it's not a string, it's not vault data
         return False
 
-    if b_data.startswith(b_HEADER):
-        return True
-    return False
+    return bool(b_data.startswith(b_HEADER))
 
 
 def is_encrypted_file(file_obj, start_pos=0, count=-1):
@@ -283,8 +281,8 @@ def verify_secret_is_not_empty(secret, msg=None):
 
     Currently, only requirement is that the password is not None or an empty string.
     '''
-    msg = msg or 'Invalid vault password was provided'
     if not secret:
+        msg = msg or 'Invalid vault password was provided'
         raise AnsibleVaultPasswordError(msg)
 
 
@@ -368,10 +366,7 @@ def script_is_client(filename):
     script_name, dummy = os.path.splitext(filename)
 
     # TODO: for now, this is entirely based on filename
-    if script_name.endswith('-client'):
-        return True
-
-    return False
+    return bool(script_name.endswith('-client'))
 
 
 def get_file_vault_secret(filename=None, vault_id=None, encoding=None, loader=None):
@@ -546,9 +541,8 @@ def match_secrets(secrets, target_vault_ids):
     if not secrets:
         return []
 
-    matches = [(vault_id, secret)
-               for vault_id, secret in secrets if vault_id in target_vault_ids]
-    return matches
+    return [(vault_id, secret)
+                   for vault_id, secret in secrets if vault_id in target_vault_ids]
 
 
 def match_best_secret(secrets, target_vault_ids):
@@ -596,10 +590,8 @@ def match_encrypt_secret(secrets, encrypt_vault_id=None):
     # Find the best/first secret from secrets since we didnt specify otherwise
     # ie, consider all of the available secrets as matches
     _vault_id_matchers = [_vault_id for _vault_id, dummy in secrets]
-    best_secret = match_best_secret(secrets, _vault_id_matchers)
-
     # can be empty list sans any tuple
-    return best_secret
+    return match_best_secret(secrets, _vault_id_matchers)
 
 
 class VaultLib:
@@ -821,8 +813,8 @@ class VaultEditor:
         if file_len > 0:  # avoid work when file was empty
             max_chunk_len = min(1024 * 1024 * 2, file_len)
 
-            passes = 3
             with open(tmp_path, "wb") as fh:
+                passes = 3
                 for _ in range(passes):
                     fh.seek(0, 0)
                     # get a random chunk of data, each pass with other length
@@ -830,7 +822,7 @@ class VaultEditor:
                         max_chunk_len // 2, max_chunk_len)
                     data = os.urandom(chunk_len)
 
-                    for _ in range(0, file_len // chunk_len):
+                    for _ in range(file_len // chunk_len):
                         fh.write(data)
                     fh.write(data[:file_len % chunk_len])
 
@@ -917,15 +909,12 @@ class VaultEditor:
         if filename == '-':
             return filename
 
-        real_path = os.path.realpath(filename)
-        return real_path
+        return os.path.realpath(filename)
 
     def encrypt_bytes(self, b_plaintext, secret, vault_id=None):
 
-        b_ciphertext = self.vault.encrypt(
-            b_plaintext, secret, vault_id=vault_id)
-
-        return b_ciphertext
+        return self.vault.encrypt(
+                b_plaintext, secret, vault_id=vault_id)
 
     def encrypt_file(self, filename, secret, vault_id=None, output_file=None):
 
@@ -1015,11 +1004,9 @@ class VaultEditor:
         vaulttext = to_text(b_vaulttext)
 
         try:
-            plaintext = self.vault.decrypt(vaulttext, filename=filename)
-            return plaintext
+            return self.vault.decrypt(vaulttext, filename=filename)
         except AnsibleError as e:
-            raise AnsibleVaultError("%s for %s" % (
-                to_native(e), to_native(filename)))
+            raise AnsibleVaultError('%s for %s' % (to_native(e), to_native(filename)))
 
     # FIXME/TODO: make this use VaultSecret
     def rekey_file(self, filename, new_vault_secret, new_vault_id=None):
@@ -1163,7 +1150,7 @@ class VaultAES256:
     # Note: strings in this class should be byte strings by default.
 
     def __init__(self):
-        if not HAS_CRYPTOGRAPHY and not HAS_PYCRYPTO:
+        if not (HAS_CRYPTOGRAPHY or HAS_PYCRYPTO):
             raise AnsibleError(NEED_CRYPTO_LIBRARY)
 
     @staticmethod
@@ -1174,9 +1161,7 @@ class VaultAES256:
             salt=b_salt,
             iterations=10000,
             backend=CRYPTOGRAPHY_BACKEND)
-        b_derivedkey = kdf.derive(b_password)
-
-        return b_derivedkey
+        return kdf.derive(b_password)
 
     @staticmethod
     def _pbkdf2_prf(p, s):
@@ -1188,9 +1173,8 @@ class VaultAES256:
 
         # make two keys and one iv
 
-        b_derivedkey = PBKDF2_pycrypto(b_password, b_salt, dkLen=(2 * key_length) + iv_length,
-                                       count=10000, prf=cls._pbkdf2_prf)
-        return b_derivedkey
+        return PBKDF2_pycrypto(b_password, b_salt, dkLen=(2 * key_length) + iv_length,
+                                           count=10000, prf=cls._pbkdf2_prf)
 
     @classmethod
     def _gen_key_initctr(cls, b_password, b_salt):
@@ -1304,11 +1288,9 @@ class VaultAES256:
                           modes.CTR(b_iv), CRYPTOGRAPHY_BACKEND)
         decryptor = cipher.decryptor()
         unpadder = padding.PKCS7(128).unpadder()
-        b_plaintext = unpadder.update(
-            decryptor.update(b_ciphertext) + decryptor.finalize()
-        ) + unpadder.finalize()
-
-        return b_plaintext
+        return unpadder.update(
+                decryptor.update(b_ciphertext) + decryptor.finalize()
+            ) + unpadder.finalize()
 
     @staticmethod
     def _is_equal(b_a, b_b):
@@ -1329,10 +1311,7 @@ class VaultAES256:
 
         result = 0
         for b_x, b_y in zip(b_a, b_b):
-            if PY3:
-                result |= b_x ^ b_y
-            else:
-                result |= ord(b_x) ^ ord(b_y)
+            result |= b_x ^ b_y if PY3 else ord(b_x) ^ ord(b_y)
         return result == 0
 
     @classmethod
@@ -1350,11 +1329,7 @@ class VaultAES256:
         b_plaintext = cipher.decrypt(b_ciphertext)
 
         # UNPAD DATA
-        if PY3:
-            padding_length = b_plaintext[-1]
-        else:
-            padding_length = ord(b_plaintext[-1])
-
+        padding_length = b_plaintext[-1] if PY3 else ord(b_plaintext[-1])
         b_plaintext = b_plaintext[:-padding_length]
         return b_plaintext
 

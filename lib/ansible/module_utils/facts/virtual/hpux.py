@@ -39,15 +39,16 @@ class HPUXVirtual(Virtual):
                 virtual_facts['virtualization_role'] = 'HP vPar'
         if os.path.exists('/opt/hpvm/bin/hpvminfo'):
             rc, out, err = self.module.run_command("/opt/hpvm/bin/hpvminfo")
-            if rc == 0 and re.match('.*Running.*HPVM vPar.*', out):
-                virtual_facts['virtualization_type'] = 'guest'
-                virtual_facts['virtualization_role'] = 'HPVM vPar'
-            elif rc == 0 and re.match('.*Running.*HPVM guest.*', out):
-                virtual_facts['virtualization_type'] = 'guest'
-                virtual_facts['virtualization_role'] = 'HPVM IVM'
-            elif rc == 0 and re.match('.*Running.*HPVM host.*', out):
-                virtual_facts['virtualization_type'] = 'host'
-                virtual_facts['virtualization_role'] = 'HPVM'
+            if rc == 0:
+                if re.match('.*Running.*HPVM vPar.*', out):
+                    virtual_facts['virtualization_type'] = 'guest'
+                    virtual_facts['virtualization_role'] = 'HPVM vPar'
+                elif re.match('.*Running.*HPVM guest.*', out):
+                    virtual_facts['virtualization_type'] = 'guest'
+                    virtual_facts['virtualization_role'] = 'HPVM IVM'
+                elif re.match('.*Running.*HPVM host.*', out):
+                    virtual_facts['virtualization_type'] = 'host'
+                    virtual_facts['virtualization_role'] = 'HPVM'
         if os.path.exists('/usr/sbin/parstatus'):
             rc, out, err = self.module.run_command("/usr/sbin/parstatus")
             if rc == 0:

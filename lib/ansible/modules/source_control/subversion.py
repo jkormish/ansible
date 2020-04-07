@@ -170,27 +170,18 @@ class Subversion(object):
         # it also updates!
         output = self._exec(
             ["switch", "--revision", self.revision, self.repo, self.dest])
-        for line in output:
-            if re.search(r'^[ABDUCGE]\s', line):
-                return True
-        return False
+        return any(re.search(r'^[ABDUCGE]\s', line) for line in output)
 
     def update(self):
         '''Update existing svn working directory.'''
         output = self._exec(["update", "-r", self.revision, self.dest])
 
-        for line in output:
-            if re.search(r'^[ABDUCGE]\s', line):
-                return True
-        return False
+        return any(re.search(r'^[ABDUCGE]\s', line) for line in output)
 
     def revert(self):
         '''Revert svn working directory.'''
         output = self._exec(["revert", "-R", self.dest])
-        for line in output:
-            if re.search(r'^Reverted ', line) is None:
-                return True
-        return False
+        return any(re.search(r'^Reverted ', line) is None for line in output)
 
     def get_revision(self):
         '''Revision and URL of subversion working directory.'''
@@ -202,8 +193,7 @@ class Subversion(object):
     def get_remote_revision(self):
         '''Revision and URL of subversion working directory.'''
         text = '\n'.join(self._exec(["info", self.repo]))
-        rev = re.search(r'^Revision:.*$', text, re.MULTILINE).group(0)
-        return rev
+        return re.search(r'^Revision:.*$', text, re.MULTILINE).group(0)
 
     def has_local_mods(self):
         '''True if revisioned files have been added or modified. Unrevisioned files are ignored.'''
@@ -272,21 +262,20 @@ def main():
     svn = Subversion(module, dest, repo, revision,
                      username, password, svn_path)
 
-    if not export and not update and not checkout:
+    if not (export or update or checkout):
         module.exit_json(changed=False, after=svn.get_remote_revision())
     if export or not os.path.exists(dest):
         before = None
         local_mods = False
         if module.check_mode:
             module.exit_json(changed=True)
-        elif not export and not checkout:
+        elif not (export or checkout):
             module.exit_json(changed=False)
         if not export and checkout:
             svn.checkout()
-            files_changed = True
         else:
             svn.export(force=force)
-            files_changed = True
+        files_changed = True
     elif svn.is_svn_repo():
         # Order matters. Need to get local mods before switch to avoid false
         # positives. Need to switch before revert to ensure we are reverting to

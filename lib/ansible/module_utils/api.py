@@ -94,8 +94,7 @@ def rate_limit(rate=None, rate_limit=None):
                 if left > 0:
                     time.sleep(left)
                 last[0] = time.clock()
-            ret = f(*args, **kwargs)
-            return ret
+            return f(*args, **kwargs)
 
         return ratelimited
     return wrapper
@@ -107,21 +106,23 @@ def retry(retries=None, retry_pause=1):
         retry_count = 0
 
         def retried(*args, **kwargs):
-            if retries is not None:
-                ret = None
-                while True:
-                    # pylint doesn't understand this is a closure
-                    retry_count += 1  # pylint: disable=undefined-variable
-                    if retry_count >= retries:
-                        raise Exception("Retry limit exceeded: %d" % retries)
-                    try:
-                        ret = f(*args, **kwargs)
-                    except Exception:
-                        pass
-                    if ret:
-                        break
-                    time.sleep(retry_pause)
-                return ret
+            if retries is None:
+                return
+
+            ret = None
+            while True:
+                # pylint doesn't understand this is a closure
+                retry_count += 1  # pylint: disable=undefined-variable
+                if retry_count >= retries:
+                    raise Exception("Retry limit exceeded: %d" % retries)
+                try:
+                    ret = f(*args, **kwargs)
+                except Exception:
+                    pass
+                if ret:
+                    break
+                time.sleep(retry_pause)
+            return ret
 
         return retried
     return wrapper

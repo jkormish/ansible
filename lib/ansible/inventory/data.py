@@ -60,13 +60,12 @@ class InventoryData(object):
 
     def serialize(self):
         self._groups_dict_cache = None
-        data = {
-            'groups': self.groups,
-            'hosts': self.hosts,
-            'local': self.localhost,
-            'source': self.current_source,
-        }
-        return data
+        return {
+                'groups': self.groups,
+                'hosts': self.hosts,
+                'local': self.localhost,
+                'source': self.current_source,
+            }
 
     def deserialize(self, data):
         self._groups_dict_cache = {}

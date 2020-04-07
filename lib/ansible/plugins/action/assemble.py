@@ -60,23 +60,18 @@ class ActionModule(ActionBase):
                 tmp.write(b'\n')
 
             # delimiters should only appear between fragments
-            if delimit_me:
-                if delimiter:
-                    # un-escape anything like newlines
-                    delimiter = codecs.escape_decode(delimiter)[0]
-                    tmp.write(delimiter)
-                    # always make sure there's a newline after the
-                    # delimiter, so lines don't run together
-                    if delimiter[-1] != b'\n':
-                        tmp.write(b'\n')
+            if delimit_me and delimiter:
+                # un-escape anything like newlines
+                delimiter = codecs.escape_decode(delimiter)[0]
+                tmp.write(delimiter)
+                # always make sure there's a newline after the
+                # delimiter, so lines don't run together
+                if delimiter[-1] != b'\n':
+                    tmp.write(b'\n')
 
             tmp.write(fragment_content)
             delimit_me = True
-            if fragment_content.endswith(b'\n'):
-                add_newline = False
-            else:
-                add_newline = True
-
+            add_newline = False if fragment_content.endswith(b'\n') else True
         tmp.close()
         return temp_path
 
@@ -88,7 +83,7 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         if task_vars is None:
-            task_vars = dict()
+            task_vars = {}
 
         src = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)

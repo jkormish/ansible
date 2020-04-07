@@ -134,9 +134,6 @@ def get_ansible_collector(all_collector_classes,
                                    module_setup=True)
     collectors.append(collector_meta_data_collector)
 
-    fact_collector = \
-        AnsibleFactCollector(collectors=collectors,
-                             filter_spec=filter_spec,
-                             namespace=namespace)
-
-    return fact_collector
+    return AnsibleFactCollector(collectors=collectors,
+                                 filter_spec=filter_spec,
+                                 namespace=namespace)

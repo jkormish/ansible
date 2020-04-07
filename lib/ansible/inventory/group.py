@@ -92,21 +92,16 @@ class Group:
         return self.deserialize(data)
 
     def serialize(self):
-        parent_groups = []
-        for parent in self.parent_groups:
-            parent_groups.append(parent.serialize())
-
+        parent_groups = [parent.serialize() for parent in self.parent_groups]
         self._hosts = None
 
-        result = dict(
-            name=self.name,
-            vars=self.vars.copy(),
-            parent_groups=parent_groups,
-            depth=self.depth,
-            hosts=self.hosts,
-        )
-
-        return result
+        return dict(
+                name=self.name,
+                vars=self.vars.copy(),
+                parent_groups=parent_groups,
+                depth=self.depth,
+                hosts=self.hosts,
+            )
 
     def deserialize(self, data):
         self.__init__()
@@ -150,9 +145,8 @@ class Group:
 
             for new_item in chain.from_iterable(getattr(g, rel) for g in unprocessed):
                 new_unprocessed.add(new_item)
-                if preserve_ordering:
-                    if new_item not in seen:
-                        ordered.append(new_item)
+                if preserve_ordering and new_item not in seen:
+                    ordered.append(new_item)
 
             new_unprocessed.difference_update(seen)
             unprocessed = new_unprocessed

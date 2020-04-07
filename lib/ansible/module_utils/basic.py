@@ -608,7 +608,7 @@ class AnsibleModule(object):
 
         self.aliases = {}
         self._legal_inputs = []
-        self._options_context = list()
+        self._options_context = []
         self._tmpdir = None
 
         if add_file_common_args:
@@ -782,10 +782,7 @@ class AnsibleModule(object):
     def selinux_mls_enabled(self):
         if not HAVE_SELINUX:
             return False
-        if selinux.is_selinux_mls_enabled() == 1:
-            return True
-        else:
-            return False
+        return selinux.is_selinux_mls_enabled() == 1
 
     def selinux_enabled(self):
         if not HAVE_SELINUX:
@@ -795,10 +792,7 @@ class AnsibleModule(object):
                 if rc == 0:
                     self.fail_json(msg="Aborting, target uses selinux but python bindings (libselinux-python) aren't installed!")
             return False
-        if selinux.is_selinux_enabled() == 1:
-            return True
-        else:
-            return False
+        return selinux.is_selinux_enabled() == 1
 
     # Determine whether we need a placeholder for selevel/mls
     def selinux_initial_context(self):
@@ -810,7 +804,7 @@ class AnsibleModule(object):
     # If selinux fails to find a default, return an array of None
     def selinux_default_context(self, path, mode=0):
         context = self.selinux_initial_context()
-        if not HAVE_SELINUX or not self.selinux_enabled():
+        if not (HAVE_SELINUX and self.selinux_enabled()):
             return context
         try:
             ret = selinux.matchpathcon(to_native(path, errors='surrogate_or_strict'), mode)
@@ -825,7 +819,7 @@ class AnsibleModule(object):
 
     def selinux_context(self, path):
         context = self.selinux_initial_context()
-        if not HAVE_SELINUX or not self.selinux_enabled():
+        if not (HAVE_SELINUX and self.selinux_enabled()):
             return context
         try:
             ret = selinux.lgetfilecon_raw(to_native(path, errors='surrogate_or_strict'))
@@ -888,7 +882,7 @@ class AnsibleModule(object):
         return (False, None)
 
     def set_default_selinux_context(self, path, changed):
-        if not HAVE_SELINUX or not self.selinux_enabled():
+        if not (HAVE_SELINUX and self.selinux_enabled()):
             return changed
         context = self.selinux_default_context(path)
         return self.set_context_if_different(path, context, False)
@@ -1183,7 +1177,7 @@ class AnsibleModule(object):
             # An empty user or 'a' means 'all'.
             users = permlist.pop(0)
             use_umask = (users == '')
-            if users == 'a' or users == '':
+            if users in ['a', '']:
                 users = 'ugo'
 
             # Check if there are illegal characters in the user list
@@ -1421,7 +1415,6 @@ class AnsibleModule(object):
 
     def _check_arguments(self, spec=None, param=None, legal_inputs=None):
         self._syslog_facility = 'LOG_USER'
-        unsupported_parameters = set()
         if spec is None:
             spec = self.argument_spec
         if param is None:
@@ -1429,10 +1422,9 @@ class AnsibleModule(object):
         if legal_inputs is None:
             legal_inputs = self._legal_inputs
 
-        for k in list(param.keys()):
-
-            if k not in legal_inputs:
-                unsupported_parameters.add(k)
+        unsupported_parameters = {
+            k for k in list(param.keys()) if k not in legal_inputs
+        }
 
         for k in PASS_VARS:
             # handle setting internal properties from internal ansible vars
@@ -1674,11 +1666,7 @@ class AnsibleModule(object):
 
                 self._options_context.append(k)
 
-                if isinstance(params[k], dict):
-                    elements = [params[k]]
-                else:
-                    elements = params[k]
-
+                elements = [params[k]] if isinstance(params[k], dict) else params[k]
                 for idx, param in enumerate(elements):
                     if not isinstance(param, dict):
                         self.fail_json(msg="value of %s must be of type dict or list of dict" % k)
@@ -1795,7 +1783,7 @@ class AnsibleModule(object):
             default = v.get('default', None)
             if pre is True:
                 # this prevents setting defaults on required items
-                if default is not None and k not in param:
+                if not (default is None or k in param):
                     param[k] = default
             else:
                 # make sure things without a default still get set None
@@ -1846,61 +1834,58 @@ class AnsibleModule(object):
 
     def log(self, msg, log_args=None):
 
-        if not self.no_log:
+        if self.no_log:
 
-            if log_args is None:
-                log_args = dict()
+            return
+        if log_args is None:
+            log_args = {}
 
-            module = 'ansible-%s' % self._name
-            if isinstance(module, binary_type):
-                module = module.decode('utf-8', 'replace')
+        module = 'ansible-%s' % self._name
+        if isinstance(module, binary_type):
+            module = module.decode('utf-8', 'replace')
 
-            # 6655 - allow for accented characters
-            if not isinstance(msg, (binary_type, text_type)):
-                raise TypeError("msg should be a string (got %s)" % type(msg))
+        # 6655 - allow for accented characters
+        if not isinstance(msg, (binary_type, text_type)):
+            raise TypeError("msg should be a string (got %s)" % type(msg))
 
-            # We want journal to always take text type
-            # syslog takes bytes on py2, text type on py3
-            if isinstance(msg, binary_type):
-                journal_msg = remove_values(msg.decode('utf-8', 'replace'), self.no_log_values)
-            else:
-                # TODO: surrogateescape is a danger here on Py3
-                journal_msg = remove_values(msg, self.no_log_values)
+        # We want journal to always take text type
+        # syslog takes bytes on py2, text type on py3
+        if isinstance(msg, binary_type):
+            journal_msg = remove_values(msg.decode('utf-8', 'replace'), self.no_log_values)
+        else:
+            # TODO: surrogateescape is a danger here on Py3
+            journal_msg = remove_values(msg, self.no_log_values)
 
-            if PY3:
-                syslog_msg = journal_msg
-            else:
-                syslog_msg = journal_msg.encode('utf-8', 'replace')
-
-            if has_journal:
-                journal_args = [("MODULE", os.path.basename(__file__))]
-                for arg in log_args:
-                    journal_args.append((arg.upper(), str(log_args[arg])))
-                try:
-                    if HAS_SYSLOG:
-                        # If syslog_facility specified, it needs to convert
-                        #  from the facility name to the facility code, and
-                        #  set it as SYSLOG_FACILITY argument of journal.send()
-                        facility = getattr(syslog,
-                                           self._syslog_facility,
-                                           syslog.LOG_USER) >> 3
-                        journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
-                                     SYSLOG_FACILITY=facility,
-                                     **dict(journal_args))
-                    else:
-                        journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
-                                     **dict(journal_args))
-                except IOError:
-                    # fall back to syslog since logging to journal failed
-                    self._log_to_syslog(syslog_msg)
-            else:
+        syslog_msg = journal_msg if PY3 else journal_msg.encode('utf-8', 'replace')
+        if has_journal:
+            journal_args = [("MODULE", os.path.basename(__file__))]
+            for arg in log_args:
+                journal_args.append((arg.upper(), str(log_args[arg])))
+            try:
+                if HAS_SYSLOG:
+                    # If syslog_facility specified, it needs to convert
+                    #  from the facility name to the facility code, and
+                    #  set it as SYSLOG_FACILITY argument of journal.send()
+                    facility = getattr(syslog,
+                                       self._syslog_facility,
+                                       syslog.LOG_USER) >> 3
+                    journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
+                                 SYSLOG_FACILITY=facility,
+                                 **dict(journal_args))
+                else:
+                    journal.send(MESSAGE=u"%s %s" % (module, journal_msg),
+                                 **dict(journal_args))
+            except IOError:
+                # fall back to syslog since logging to journal failed
                 self._log_to_syslog(syslog_msg)
+        else:
+            self._log_to_syslog(syslog_msg)
 
     def _log_invocation(self):
         ''' log that ansible ran the module '''
         # TODO: generalize a separate log function and make log_invocation use it
-        # Sanitize possible password argument when logging.
-        log_args = dict()
+            # Sanitize possible password argument when logging.
+        log_args = {}
 
         for param in self.params:
             canon = self.aliases.get(param, param)
@@ -1922,11 +1907,7 @@ class AnsibleModule(object):
                 log_args[param] = heuristic_log_sanitize(param_val, self.no_log_values)
 
         msg = ['%s=%s' % (to_native(arg), to_native(val)) for arg, val in log_args.items()]
-        if msg:
-            msg = 'Invoked with %s' % ' '.join(msg)
-        else:
-            msg = 'Invoked'
-
+        msg = 'Invoked with %s' % ' '.join(msg) if msg else 'Invoked'
         self.log(msg, log_args=log_args)
 
     def _set_cwd(self):

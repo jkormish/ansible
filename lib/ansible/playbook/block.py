@@ -229,10 +229,11 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         a task we don't want to include the attribute list of tasks.
         '''
 
-        data = dict()
-        for attr in self._valid_attrs:
-            if attr not in ('block', 'rescue', 'always'):
-                data[attr] = getattr(self, attr)
+        data = {
+            attr: getattr(self, attr)
+            for attr in self._valid_attrs
+            if attr not in ('block', 'rescue', 'always')
+        }
 
         data['dep_chain'] = self.get_dep_chain()
         data['eor'] = self._eor
@@ -338,12 +339,8 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                         dep_chain.reverse()
                         for dep in dep_chain:
                             dep_value = dep._attributes.get(attr, Sentinel)
-                            if extend:
-                                value = self._extend_value(value, dep_value, prepend)
-                            else:
-                                value = dep_value
-
-                            if value is not Sentinel and not extend:
+                            value = self._extend_value(value, dep_value, prepend) if extend else dep_value
+                            if not (value is Sentinel or extend):
                                 break
                 except AttributeError:
                     pass

@@ -72,7 +72,7 @@ class GalaxyLogin(object):
         except Exception:
             pass
 
-        if not self.github_username or not self.github_password:
+        if not (self.github_username and self.github_password):
             raise AnsibleError(
                 "Invalid GitHub credentials. Username and password are required.")
 

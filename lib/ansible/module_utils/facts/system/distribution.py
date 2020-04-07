@@ -19,8 +19,7 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 def get_uname(module, flags=('-v')):
     if isinstance(flags, str):
         flags = flags.split()
-    command = ['uname']
-    command.extend(flags)
+    command = ['uname', *flags]
     rc, out, err = module.run_command(command)
     if rc == 0:
         return out
@@ -239,9 +238,7 @@ class DistributionFiles:
         return True, openwrt_facts
 
     def parse_distribution_file_Alpine(self, name, data, path, collected_facts):
-        alpine_facts = {}
-        alpine_facts['distribution'] = 'Alpine'
-        alpine_facts['distribution_version'] = data
+        alpine_facts = {'distribution': 'Alpine', 'distribution_version': data}
         return True, alpine_facts
 
     def parse_distribution_file_SUSE(self, name, data, path, collected_facts):
@@ -549,8 +546,7 @@ class Distribution(object):
         return hpux_facts
 
     def get_distribution_Darwin(self):
-        darwin_facts = {}
-        darwin_facts['distribution'] = 'MacOSX'
+        darwin_facts = {'distribution': 'MacOSX'}
         rc, out, err = self.module.run_command("/usr/bin/sw_vers -productVersion")
         data = out.split()[-1]
         if data:
@@ -559,8 +555,7 @@ class Distribution(object):
         return darwin_facts
 
     def get_distribution_FreeBSD(self):
-        freebsd_facts = {}
-        freebsd_facts['distribution_release'] = platform.release()
+        freebsd_facts = {'distribution_release': platform.release()}
         data = re.search(r'(\d+)\.(\d+)-(RELEASE|STABLE|CURRENT).*', freebsd_facts['distribution_release'])
         if 'trueos' in platform.version():
             freebsd_facts['distribution'] = 'TrueOS'
@@ -570,8 +565,7 @@ class Distribution(object):
         return freebsd_facts
 
     def get_distribution_OpenBSD(self):
-        openbsd_facts = {}
-        openbsd_facts['distribution_version'] = platform.release()
+        openbsd_facts = {'distribution_version': platform.release()}
         rc, out, err = self.module.run_command("/sbin/sysctl -n kern.version")
         match = re.match(r'OpenBSD\s[0-9]+.[0-9]+-(\S+)\s.*', out)
         if match:
@@ -591,9 +585,7 @@ class Distribution(object):
         return netbsd_facts
 
     def get_distribution_SMGL(self):
-        smgl_facts = {}
-        smgl_facts['distribution'] = 'Source Mage GNU/Linux'
-        return smgl_facts
+        return {'distribution': 'Source Mage GNU/Linux'}
 
     def get_distribution_SunOS(self):
         sunos_facts = {}
@@ -651,11 +643,8 @@ class DistributionFactCollector(BaseFactCollector):
 
     def collect(self, module=None, collected_facts=None):
         collected_facts = collected_facts or {}
-        facts_dict = {}
         if not module:
-            return facts_dict
+            return {}
 
         distribution = Distribution(module=module)
-        distro_facts = distribution.get_distribution_facts()
-
-        return distro_facts
+        return distribution.get_distribution_facts()

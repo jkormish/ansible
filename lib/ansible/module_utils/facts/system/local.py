@@ -34,15 +34,13 @@ class LocalFactCollector(BaseFactCollector):
     _fact_ids = set()
 
     def collect(self, module=None, collected_facts=None):
-        local_facts = {}
-        local_facts['local'] = {}
-
+        local_facts = {'local': {}}
         if not module:
             return local_facts
 
         fact_path = module.params.get('fact_path', None)
 
-        if not fact_path or not os.path.exists(fact_path):
+        if not (fact_path and os.path.exists(fact_path)):
             return local_facts
 
         local = {}

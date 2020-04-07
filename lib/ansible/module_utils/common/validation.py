@@ -119,9 +119,8 @@ def check_required_together(terms, module_parameters):
     for term in terms:
         counts = [count_terms(field, module_parameters) for field in term]
         non_zero = [c for c in counts if c > 0]
-        if len(non_zero) > 0:
-            if 0 in counts:
-                results.append(term)
+        if non_zero and 0 in counts:
+            results.append(term)
     if results:
         for term in results:
             msg = "parameters are required together: %s" % ', '.join(term)
@@ -241,8 +240,7 @@ def check_required_if(requirements, module_parameters):
         return results
 
     for req in requirements:
-        missing = {}
-        missing['missing'] = []
+        missing = {'missing': []}
         max_missing_count = 0
         is_one_of = False
         if len(req) == 4:

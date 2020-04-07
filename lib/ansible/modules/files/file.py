@@ -572,13 +572,12 @@ def ensure_file_attributes(path, follow, timestamps):
     mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
     atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
 
-    if prev_state != 'file':
-        if follow and prev_state == 'link':
-            # follow symlink and operate on original
-            b_path = os.path.realpath(b_path)
-            path = to_native(b_path, errors='strict')
-            prev_state = get_state(b_path)
-            file_args['path'] = path
+    if prev_state != 'file' and follow and prev_state == 'link':
+        # follow symlink and operate on original
+        b_path = os.path.realpath(b_path)
+        path = to_native(b_path, errors='strict')
+        prev_state = get_state(b_path)
+        file_args['path'] = path
 
     if prev_state not in ('file', 'hard'):
         # file is not absent and any other state is a conflict
@@ -669,12 +668,11 @@ def ensure_symlink(path, src, follow, force, timestamps):
     mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
     atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
     # source is both the source of a symlink or an informational passing of the src for a template module
-    # or copy module, even if this module never uses it, it is needed to key off some things
-    if src is None:
-        if follow:
-            # use the current target of the link as the source
-            src = to_native(os.path.realpath(b_path), errors='strict')
-            b_src = to_bytes(src, errors='surrogate_or_strict')
+        # or copy module, even if this module never uses it, it is needed to key off some things
+    if src is None and follow:
+        # use the current target of the link as the source
+        src = to_native(os.path.realpath(b_path), errors='strict')
+        b_src = to_bytes(src, errors='surrogate_or_strict')
 
     if not os.path.islink(b_path) and os.path.isdir(b_path):
         relpath = path
@@ -684,7 +682,7 @@ def ensure_symlink(path, src, follow, force, timestamps):
 
     absrc = os.path.join(relpath, src)
     b_absrc = to_bytes(absrc, errors='surrogate_or_strict')
-    if not force and not os.path.exists(b_absrc):
+    if not (force or os.path.exists(b_absrc)):
         raise AnsibleModuleError(results={'msg': 'src file does not exist, use "force=yes" if you'
                                                  ' really want to create the link: %s' % absrc,
                                           'path': path, 'src': src})
@@ -793,7 +791,7 @@ def ensure_hardlink(path, src, follow, force, timestamps):
             diff['after']['src'] = src
             changed = True
     elif prev_state == 'hard':
-        if not os.stat(b_path).st_ino == os.stat(b_src).st_ino:
+        if os.stat(b_path).st_ino != os.stat(b_src).st_ino:
             changed = True
             if not force:
                 raise AnsibleModuleError(results={'msg': 'Cannot link, different hard link exists at destination',
@@ -821,21 +819,25 @@ def ensure_hardlink(path, src, follow, force, timestamps):
                 [os.path.dirname(b_path), to_bytes(".%s.%s.tmp" % (os.getpid(), time.time()))]
             )
             try:
-                if prev_state == 'directory':
-                    if os.path.exists(b_path):
-                        try:
-                            os.unlink(b_path)
-                        except OSError as e:
-                            if e.errno != errno.ENOENT:  # It may already have been removed
-                                raise
+                if prev_state == 'directory' and os.path.exists(b_path):
+                    try:
+                        os.unlink(b_path)
+                    except OSError as e:
+                        if e.errno != errno.ENOENT:  # It may already have been removed
+                            raise
                 os.link(b_src, b_tmppath)
                 os.rename(b_tmppath, b_path)
             except OSError as e:
                 if os.path.exists(b_tmppath):
                     os.unlink(b_tmppath)
-                raise AnsibleModuleError(results={'msg': 'Error while replacing: %s'
-                                                         % to_native(e, nonstring='simplerepr'),
-                                                  'path': path})
+                raise AnsibleModuleError(
+                    results={
+                        'msg': 'Error while replacing: %s'
+                        % to_native(e, nonstring='simplerepr'),
+                        'path': path,
+                    }
+                )
+
         else:
             try:
                 os.link(b_src, b_path)
@@ -888,8 +890,12 @@ def main():
     path = params['path']
     src = params['src']
 
-    timestamps = {}
-    timestamps['modification_time'] = keep_backward_compatibility_on_timestamps(params['modification_time'], state)
+    timestamps = {
+        'modification_time': keep_backward_compatibility_on_timestamps(
+            params['modification_time'], state
+        )
+    }
+
     timestamps['modification_time_format'] = params['modification_time_format']
     timestamps['access_time'] = keep_backward_compatibility_on_timestamps(params['access_time'], state)
     timestamps['access_time_format'] = params['access_time_format']

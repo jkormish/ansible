@@ -55,9 +55,7 @@ class AIXHardware(Hardware):
         return hardware_facts
 
     def get_cpu_facts(self):
-        cpu_facts = {}
-        cpu_facts['processor'] = []
-
+        cpu_facts = {'processor': []}
         rc, out, err = self.module.run_command("/usr/sbin/lsdev -Cc processor")
         if out:
             i = 0
@@ -79,9 +77,9 @@ class AIXHardware(Hardware):
 
             rc, out, err = self.module.run_command(
                 "/usr/sbin/lsattr -El " + cpudev + " -a smt_threads")
-            if out:
-                data = out.split(' ')
-                cpu_facts['processor_cores'] = int(data[1])
+        if out:
+            data = out.split(' ')
+            cpu_facts['processor_cores'] = int(data[1])
 
         return cpu_facts
 
@@ -178,9 +176,7 @@ class AIXHardware(Hardware):
         return vgs_facts
 
     def get_mount_facts(self):
-        mount_facts = {}
-
-        mount_facts['mounts'] = []
+        mount_facts = {'mounts': []}
 
         mounts = []
 
@@ -221,9 +217,7 @@ class AIXHardware(Hardware):
         return mount_facts
 
     def get_device_facts(self):
-        device_facts = {}
-        device_facts['devices'] = {}
-
+        device_facts = {'devices': {}}
         lsdev_cmd = self.module.get_bin_path('lsdev', True)
         lsattr_cmd = self.module.get_bin_path('lsattr', True)
         rc, out_lsdev, err = self.module.run_command(lsdev_cmd)

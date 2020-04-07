@@ -28,10 +28,7 @@ def fix_description(config_options):
 
     for config_key in config_options:
         description = config_options[config_key].get('description', [])
-        if isinstance(description, list):
-            desc_list = description
-        else:
-            desc_list = [description]
+        desc_list = description if isinstance(description, list) else [description]
         config_options[config_key]['description'] = desc_list
     return config_options
 

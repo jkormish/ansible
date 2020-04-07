@@ -274,7 +274,4 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
 #:              1//0
 #:          except ZeroDivisionError as e:
 #:              raise MyException('Encountered and error: %s' % to_native(e))
-if PY3:
-    to_native = to_text
-else:
-    to_native = to_bytes
+to_native = to_text if PY3 else to_bytes

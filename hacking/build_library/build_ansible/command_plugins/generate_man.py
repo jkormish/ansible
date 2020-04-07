@@ -72,11 +72,7 @@ def get_options(optlist):
 def dedupe_groups(parser):
     action_groups = []
     for action_group in parser._action_groups:
-        found = False
-        for a in action_groups:
-            if a._actions == action_group._actions:
-                found = True
-                break
+        found = any(a._actions == action_group._actions for a in action_groups)
         if not found:
             action_groups.append(action_group)
     return action_groups
@@ -85,10 +81,12 @@ def dedupe_groups(parser):
 def get_option_groups(option_parser):
     groups = []
     for action_group in dedupe_groups(option_parser)[1:]:
-        group_info = {}
-        group_info['desc'] = action_group.description
-        group_info['options'] = action_group._actions
-        group_info['group_obj'] = action_group
+        group_info = {
+            'desc': action_group.description,
+            'options': action_group._actions,
+            'group_obj': action_group,
+        }
+
         groups.append(group_info)
     return groups
 

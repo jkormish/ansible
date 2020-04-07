@@ -64,8 +64,7 @@ class FreeBSDHardware(Hardware):
         return hardware_facts
 
     def get_cpu_facts(self):
-        cpu_facts = {}
-        cpu_facts['processor'] = []
+        cpu_facts = {'processor': []}
         sysctl = self.module.get_bin_path('sysctl')
         if sysctl:
             rc, out, err = self.module.run_command(
@@ -126,9 +125,8 @@ class FreeBSDHardware(Hardware):
 
     @timeout()
     def get_mount_facts(self):
-        mount_facts = {}
+        mount_facts = {'mounts': []}
 
-        mount_facts['mounts'] = []
         fstab = get_file_content('/etc/fstab')
         if fstab:
             for line in fstab.splitlines():

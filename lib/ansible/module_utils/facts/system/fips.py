@@ -29,8 +29,7 @@ class FipsFactCollector(BaseFactCollector):
 
     def collect(self, module=None, collected_facts=None):
         # NOTE: this is populated even if it is not set
-        fips_facts = {}
-        fips_facts['fips'] = False
+        fips_facts = {'fips': False}
         data = get_file_content('/proc/sys/crypto/fips_enabled')
         if data and data == '1':
             fips_facts['fips'] = True

@@ -216,8 +216,7 @@ def next_release_date(weeks=3):
         # Thursday of next week
         today += datetime.timedelta(days=(10 - numeric_today))
 
-    next_release = today + datetime.timedelta(days=days_in_the_future)
-    return next_release
+    return today + datetime.timedelta(days=days_in_the_future)
 
 
 def create_long_message(versions, name):

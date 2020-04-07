@@ -99,8 +99,8 @@ def parse_kv(args, check_raw=False):
                 raw_params.append(orig_x)
 
         # recombine the free-form params, if any were found, and assign
-        # them to a special option for use later by the shell/command module
-        if len(raw_params) > 0:
+                # them to a special option for use later by the shell/command module
+        if raw_params:
             options[u'_raw_params'] = join_args(raw_params)
 
     return options
@@ -148,10 +148,7 @@ def join_args(s):
     '''
     result = ''
     for p in s:
-        if len(result) == 0 or result.endswith('\n'):
-            result += p
-        else:
-            result += ' ' + p
+        result += p if len(result) == 0 or result.endswith('\n') else ' ' + p
     return result
 
 

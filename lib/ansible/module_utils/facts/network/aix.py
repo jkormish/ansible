@@ -98,7 +98,7 @@ class AIXNetwork(GenericBsdIfconfigNetwork):
                     self.parse_unknown_line(words, current_if, ips)
 
             # don't bother with wpars it does not work
-            # zero means not in wpar
+                    # zero means not in wpar
             if not uname_rc and uname_out.split()[0] == '0':
 
                 if current_if['macaddress'] == 'unknown' and re.match('^en', current_if['device']):
@@ -109,8 +109,6 @@ class AIXNetwork(GenericBsdIfconfigNetwork):
                         if rc != 0:
                             break
                         for line in out.splitlines():
-                            if not line:
-                                pass
                             buff = re.match('^Hardware Address: (.*)', line)
                             if buff:
                                 current_if['macaddress'] = buff.group(1)

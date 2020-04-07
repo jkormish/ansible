@@ -144,7 +144,7 @@ class YumDnf(with_metaclass(ABCMeta, object)):
             return
 
         if self.lock_timeout > 0:
-            for iteration in range(0, self.lock_timeout):
+            for _ in range(self.lock_timeout):
                 time.sleep(1)
                 if not self._is_lockfile_present():
                     return

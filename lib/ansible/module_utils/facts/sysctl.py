@@ -18,14 +18,12 @@ import re
 
 def get_sysctl(module, prefixes):
     sysctl_cmd = module.get_bin_path('sysctl')
-    cmd = [sysctl_cmd]
-    cmd.extend(prefixes)
-
+    cmd = [sysctl_cmd, *prefixes]
     rc, out, err = module.run_command(cmd)
     if rc != 0:
         return dict()
 
-    sysctl = dict()
+    sysctl = {}
     for line in out.splitlines():
         if not line:
             continue

@@ -95,11 +95,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         self._role = role
         self._parent = None
 
-        if task_include:
-            self._parent = task_include
-        else:
-            self._parent = block
-
+        self._parent = task_include if task_include else block
         super(Task, self).__init__()
 
     def get_path(self):
@@ -136,7 +132,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             for (k, v) in iteritems(ds):
                 if k.startswith('_'):
                     continue
-                buf = buf + "%s=%s " % (k, v)
+                buf += "%s=%s " % (k, v)
             buf = buf.strip()
             return buf
 
@@ -296,9 +292,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         if self._parent:
             self._parent.post_validate(templar)
 
-        if AnsibleCollectionLoader().default_collection:
-            pass
-
         super(Task, self).post_validate(templar)
 
     def _post_validate_loop(self, attr, value, templar):
@@ -372,7 +365,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         return value
 
     def get_vars(self):
-        all_vars = dict()
+        all_vars = {}
         if self._parent:
             all_vars.update(self._parent.get_vars())
 
@@ -386,7 +379,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         return all_vars
 
     def get_include_params(self):
-        all_vars = dict()
+        all_vars = {}
         if self._parent:
             all_vars.update(self._parent.get_include_params())
         if self.action in ('include', 'include_tasks', 'include_role'):
@@ -409,7 +402,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def serialize(self):
         data = super(Task, self).serialize()
 
-        if not self._squashed and not self._finalized:
+        if not (self._squashed or self._finalized):
             if self._parent:
                 data['parent'] = self._parent.serialize()
                 data['parent_type'] = self._parent.__class__.__name__
@@ -475,19 +468,22 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             else:
                 _parent = self._parent._parent
 
-            if _parent and (value is Sentinel or extend):
-                if getattr(_parent, 'statically_loaded', True):
-                    # vars are always inheritable, other attributes might not be for the parent but still should be for other ancestors
-                    if attr != 'vars' and hasattr(_parent, '_get_parent_attribute'):
-                        parent_value = _parent._get_parent_attribute(attr)
-                    else:
-                        parent_value = _parent._attributes.get(attr, Sentinel)
+            if (
+                _parent
+                and (value is Sentinel or extend)
+                and getattr(_parent, 'statically_loaded', True)
+            ):
+                # vars are always inheritable, other attributes might not be for the parent but still should be for other ancestors
+                if attr != 'vars' and hasattr(_parent, '_get_parent_attribute'):
+                    parent_value = _parent._get_parent_attribute(attr)
+                else:
+                    parent_value = _parent._attributes.get(attr, Sentinel)
 
-                    if extend:
-                        value = self._extend_value(
-                            value, parent_value, prepend)
-                    else:
-                        value = parent_value
+                if extend:
+                    value = self._extend_value(
+                        value, parent_value, prepend)
+                else:
+                    value = parent_value
         except KeyError:
             pass
 

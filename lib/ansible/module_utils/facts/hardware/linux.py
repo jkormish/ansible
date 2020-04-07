@@ -574,7 +574,7 @@ class LinuxHardware(Hardware):
                 device = elements[3]
                 target = elements[5]
                 retval[target].add(device)
-            return dict((k, list(sorted(v))) for (k, v) in iteritems(retval))
+            return {k: list(sorted(v)) for (k, v) in iteritems(retval)}
         except OSError:
             return {}
 
@@ -599,9 +599,8 @@ class LinuxHardware(Hardware):
                     block_dev_dict['holders'].append(folder)
 
     def get_device_facts(self):
-        device_facts = {}
+        device_facts = {'devices': {}}
 
-        device_facts['devices'] = {}
         lspci = self.module.get_bin_path('lspci')
         if lspci:
             rc, pcidata, err = self.module.run_command([lspci, '-D'], errors='surrogate_then_replace')
@@ -648,9 +647,7 @@ class LinuxHardware(Hardware):
                     if "device" in folder:
                         virtual = 0
                         break
-            d = {}
-            d['virtual'] = virtual
-            d['links'] = {}
+            d = {'virtual': virtual, 'links': {}}
             for (link_type, link_values) in iteritems(links):
                 d['links'][link_type] = link_values.get(block, [])
             diskname = os.path.basename(sysdir)

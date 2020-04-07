@@ -109,7 +109,11 @@ class CollectionRequirement:
     def versions(self):
         if self.allow_pre_releases:
             return self._versions
-        return set(v for v in self._versions if v == '*' or not SemanticVersion(v).is_prerelease)
+        return {
+            v
+            for v in self._versions
+            if v == '*' or not SemanticVersion(v).is_prerelease
+        }
 
     @versions.setter
     def versions(self, value):
@@ -117,12 +121,12 @@ class CollectionRequirement:
 
     @property
     def pre_releases(self):
-        return set(v for v in self._versions if SemanticVersion(v).is_prerelease)
+        return {v for v in self._versions if SemanticVersion(v).is_prerelease}
 
     @property
     def latest_version(self):
         try:
-            return max([v for v in self.versions if v != '*'], key=SemanticVersion)
+            return max((v for v in self.versions if v != '*'), key=SemanticVersion)
         except ValueError:  # ValueError: max() arg is an empty sequence
             return '*'
 
@@ -142,8 +146,13 @@ class CollectionRequirement:
 
     def add_requirement(self, parent, requirement):
         self.required_by.append((parent, requirement))
-        new_versions = set(v for v in self.versions if self._meets_requirements(v, requirement, parent))
-        if len(new_versions) == 0:
+        new_versions = {
+            v
+            for v in self.versions
+            if self._meets_requirements(v, requirement, parent)
+        }
+
+        if not new_versions:
             if self.skip:
                 force_flag = '--force-with-deps' if parent else '--force'
                 version = self.latest_version if self.latest_version != '*' else 'unknown'
@@ -377,11 +386,7 @@ class CollectionRequirement:
         version = meta['version']
         meta = CollectionVersionMetadata(namespace, name, version, None, None, meta['dependencies'])
 
-        if SemanticVersion(version).is_prerelease:
-            allow_pre_release = True
-        else:
-            allow_pre_release = False
-
+        allow_pre_release = True if SemanticVersion(version).is_prerelease else False
         return CollectionRequirement(namespace, name, b_path, None, [version], version, force, parent=parent,
                                      metadata=meta, files=files, allow_pre_releases=allow_pre_release)
 
@@ -467,9 +472,18 @@ class CollectionRequirement:
         else:
             raise AnsibleError("Failed to find collection %s:%s" % (collection, requirement))
 
-        req = CollectionRequirement(namespace, name, None, api, versions, requirement, force, parent=parent,
-                                    metadata=galaxy_meta, allow_pre_releases=allow_pre_release)
-        return req
+        return CollectionRequirement(
+            namespace,
+            name,
+            None,
+            api,
+            versions,
+            requirement,
+            force,
+            parent=parent,
+            metadata=galaxy_meta,
+            allow_pre_releases=allow_pre_release,
+        )
 
 
 def build_collection(collection_path, output_path, force):
@@ -526,9 +540,9 @@ def download_collections(collections, output_path, apis, validate_certs, no_deps
             dep_map = _build_dependency_map(collections, [], b_temp_path, apis, validate_certs, True, True, no_deps,
                                             allow_pre_release=allow_pre_release)
 
-        requirements = []
         display.display("Starting collection download process to '%s'" % output_path)
         with _display_progress():
+            requirements = []
             for name, requirement in dep_map.items():
                 collection_filename = "%s-%s-%s.tar.gz" % (requirement.namespace, requirement.name,
                                                            requirement.latest_version)
@@ -921,7 +935,7 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns):
 def _build_manifest(namespace, name, version, authors, readme, tags, description, license_ids, license_file,
                     dependencies, repository, documentation, homepage, issues, **kwargs):
 
-    manifest = {
+    return {
         'collection_info': {
             'namespace': namespace,
             'name': name,
@@ -931,7 +945,9 @@ def _build_manifest(namespace, name, version, authors, readme, tags, description
             'tags': tags,
             'description': description,
             'license': license_ids,
-            'license_file': license_file if license_file else None,  # Handle galaxy.yml having an empty string (None)
+            'license_file': license_file
+            if license_file
+            else None,  # Handle galaxy.yml having an empty string (None)
             'dependencies': dependencies,
             'repository': repository,
             'documentation': documentation,
@@ -943,12 +959,10 @@ def _build_manifest(namespace, name, version, authors, readme, tags, description
             'ftype': 'file',
             'chksum_type': 'sha256',
             'chksum_sha256': None,  # Filled out in _build_collection_tar
-            'format': MANIFEST_FORMAT
+            'format': MANIFEST_FORMAT,
         },
         'format': MANIFEST_FORMAT,
     }
-
-    return manifest
 
 
 def _build_collection_tar(b_collection_path, b_tar_path, collection_manifest, file_manifest):
@@ -1021,7 +1035,7 @@ def _build_dependency_map(collections, existing_collections, b_temp_path, apis, 
         _get_collection_info(dependency_map, existing_collections, name, version, source, b_temp_path, apis,
                              validate_certs, (force or force_deps), allow_pre_release=allow_pre_release)
 
-    checked_parents = set([to_text(c) for c in dependency_map.values() if c.skip])
+    checked_parents = {to_text(c) for c in dependency_map.values() if c.skip}
     while len(dependency_map) != len(checked_parents):
         while not no_deps:  # Only parse dependencies if no_deps was not set
             parents_to_check = set(dependency_map.keys()).difference(checked_parents)

@@ -37,8 +37,7 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
 
         """
 
-        fc_facts = {}
-        fc_facts['fibre_channel_wwn'] = []
+        fc_facts = {'fibre_channel_wwn': []}
         if sys.platform.startswith('linux'):
             for fcfile in glob.glob('/sys/class/fc_host/*/port_name'):
                 for line in get_file_lines(fcfile):

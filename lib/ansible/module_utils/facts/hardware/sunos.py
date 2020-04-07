@@ -108,11 +108,11 @@ class SunOSHardware(Hardware):
                     sockets[physid] += 1
 
         # Counting cores on Solaris can be complicated.
-        # https://blogs.oracle.com/mandalika/entry/solaris_show_me_the_cpu
-        # Treat 'processor_count' as physical sockets and 'processor_cores' as
-        # virtual CPUs visisble to Solaris. Not a true count of cores for modern SPARC as
-        # these processors have: sockets -> cores -> threads/virtual CPU.
-        if len(sockets) > 0:
+            # https://blogs.oracle.com/mandalika/entry/solaris_show_me_the_cpu
+            # Treat 'processor_count' as physical sockets and 'processor_cores' as
+            # virtual CPUs visisble to Solaris. Not a true count of cores for modern SPARC as
+            # these processors have: sockets -> cores -> threads/virtual CPU.
+        if sockets:
             cpu_facts['processor_count'] = len(sockets)
             cpu_facts['processor_cores'] = reduce(
                 lambda x, y: x + y, sockets.values())
@@ -123,13 +123,14 @@ class SunOSHardware(Hardware):
         return cpu_facts
 
     def get_memory_facts(self):
-        memory_facts = {}
-
         rc, out, err = self.module.run_command(["/usr/sbin/prtconf"])
 
-        for line in out.splitlines():
-            if 'Memory size' in line:
-                memory_facts['memtotal_mb'] = int(line.split()[2])
+        memory_facts = {
+            'memtotal_mb': int(line.split()[2])
+            for line in out.splitlines()
+            if 'Memory size' in line
+        }
+
 
         rc, out, err = self.module.run_command("/usr/sbin/swap -s")
 
@@ -147,9 +148,7 @@ class SunOSHardware(Hardware):
 
     @timeout.timeout()
     def get_mount_facts(self):
-        mount_facts = {}
-        mount_facts['mounts'] = []
-
+        mount_facts = {'mounts': []}
         # For a detailed format description see mnttab(4)
         #   special mount_point fstype options time
         fstab = get_file_content('/etc/mnttab')
@@ -223,9 +222,7 @@ class SunOSHardware(Hardware):
         # sderr:0:sd0,err:Transport Errors        0
         # sderr:0:sd0,err:Vendor  ATA
 
-        device_facts = {}
-        device_facts['devices'] = {}
-
+        device_facts = {'devices': {}}
         disk_stats = {
             'Product': 'product',
             'Revision': 'revision',

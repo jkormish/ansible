@@ -64,12 +64,7 @@ def get_sysv_script(name):
 
     :arg name: name or path of the service to test for
     '''
-    if name.startswith('/'):
-        result = name
-    else:
-        result = '/etc/init.d/%s' % name
-
-    return result
+    return name if name.startswith('/') else '/etc/init.d/%s' % name
 
 
 def sysv_exists(name):
@@ -87,10 +82,7 @@ def get_ps(module, pattern):
     Last resort to find a service by trying to match pattern to programs in memory
     '''
     found = False
-    if platform.system() == 'SunOS':
-        flags = '-ef'
-    else:
-        flags = 'auxww'
+    flags = '-ef' if platform.system() == 'SunOS' else 'auxww'
     psbin = module.get_bin_path('ps', True)
 
     (rc, psout, pserr) = module.run_command([psbin, flags])
@@ -257,11 +249,7 @@ def daemonize(module, cmd):
 def check_ps(module, pattern):
 
     # Set ps flags
-    if platform.system() == 'SunOS':
-        psflags = '-ef'
-    else:
-        psflags = 'auxww'
-
+    psflags = '-ef' if platform.system() == 'SunOS' else 'auxww'
     # Find ps binary
     psbin = module.get_bin_path('ps', True)
 

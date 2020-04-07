@@ -43,8 +43,7 @@ class NvmeInitiatorNetworkCollector(NetworkCollector):
 
         """
 
-        nvme_facts = {}
-        nvme_facts['hostnqn'] = ""
+        nvme_facts = {'hostnqn': ''}
         if sys.platform.startswith('linux'):
             for line in get_file_content('/etc/nvme/hostnqn', '').splitlines():
                 if line.startswith('#') or line.startswith(';') or line.strip() == '':

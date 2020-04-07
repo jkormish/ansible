@@ -28,9 +28,7 @@ class EnvFactCollector(BaseFactCollector):
     _fact_ids = set()
 
     def collect(self, module=None, collected_facts=None):
-        env_facts = {}
-        env_facts['env'] = {}
-
+        env_facts = {'env': {}}
         for k, v in iteritems(os.environ):
             env_facts['env'][k] = v
 

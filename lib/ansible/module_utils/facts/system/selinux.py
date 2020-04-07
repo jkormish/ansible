@@ -81,10 +81,7 @@ class SelinuxFactCollector(BaseFactCollector):
 
             try:
                 (rc, policytype) = selinux.selinux_getpolicytype()
-                if rc == 0:
-                    selinux_facts['type'] = policytype
-                else:
-                    selinux_facts['type'] = 'unknown'
+                selinux_facts['type'] = policytype if rc == 0 else 'unknown'
             except (AttributeError, OSError):
                 selinux_facts['type'] = 'unknown'
 

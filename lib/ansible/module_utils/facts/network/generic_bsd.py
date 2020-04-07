@@ -65,9 +65,11 @@ class GenericBsdIfconfigNetwork(Network):
 
     def detect_type_media(self, interfaces):
         for iface in interfaces:
-            if 'media' in interfaces[iface]:
-                if 'ether' in interfaces[iface]['media'].lower():
-                    interfaces[iface]['type'] = 'ether'
+            if (
+                'media' in interfaces[iface]
+                and 'ether' in interfaces[iface]['media'].lower()
+            ):
+                interfaces[iface]['type'] = 'ether'
         return interfaces
 
     def get_default_interfaces(self, route_path):
@@ -155,8 +157,14 @@ class GenericBsdIfconfigNetwork(Network):
 
     def parse_interface_line(self, words):
         device = words[0][0:-1]
-        current_if = {'device': device, 'ipv4': [], 'ipv6': [], 'type': 'unknown'}
-        current_if['flags'] = self.get_options(words[1])
+        current_if = {
+            'device': device,
+            'ipv4': [],
+            'ipv6': [],
+            'type': 'unknown',
+            'flags': self.get_options(words[1]),
+        }
+
         if 'LOOPBACK' in current_if['flags']:
             current_if['type'] = 'loopback'
         current_if['macaddress'] = 'unknown'    # will be overwritten later
@@ -290,19 +298,19 @@ class GenericBsdIfconfigNetwork(Network):
     def merge_default_interface(self, defaults, interfaces, ip_type):
         if 'interface' not in defaults:
             return
-        if not defaults['interface'] in interfaces:
+        if defaults['interface'] not in interfaces:
             return
         ifinfo = interfaces[defaults['interface']]
         # copy all the interface values across except addresses
         for item in ifinfo:
-            if item != 'ipv4' and item != 'ipv6':
+            if item not in ['ipv4', 'ipv6']:
                 defaults[item] = ifinfo[item]
 
         ipinfo = []
         if 'address' in defaults:
             ipinfo = [x for x in ifinfo[ip_type] if x['address'] == defaults['address']]
 
-        if len(ipinfo) == 0:
+        if not ipinfo:
             ipinfo = ifinfo[ip_type]
 
         if len(ipinfo) > 0:

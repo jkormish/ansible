@@ -70,8 +70,7 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
         SLP Scope list for iSLPD   :
         """
 
-        iscsi_facts = {}
-        iscsi_facts['iscsi_iqn'] = ""
+        iscsi_facts = {'iscsi_iqn': ''}
         if sys.platform.startswith('linux') or sys.platform.startswith('sunos'):
             for line in get_file_content('/etc/iscsi/initiatorname.iscsi', '').splitlines():
                 if line.startswith('#') or line.startswith(';') or line.strip() == '':

@@ -27,8 +27,7 @@ def _preprocess_unsafe_encode(value):
     elif is_sequence(value):
         value = [_preprocess_unsafe_encode(v) for v in value]
     elif isinstance(value, Mapping):
-        value = dict((k, _preprocess_unsafe_encode(v))
-                     for k, v in value.items())
+        value = {k: _preprocess_unsafe_encode(v) for k, v in value.items()}
 
     return value
 

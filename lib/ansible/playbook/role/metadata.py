@@ -57,9 +57,8 @@ class RoleMetadata(Base, CollectionSearch):
             raise AnsibleParserError(
                 "the 'meta/main.yml' for role %s is not a dictionary" % owner.get_name())
 
-        m = RoleMetadata(owner=owner).load_data(
-            data, variable_manager=variable_manager, loader=loader)
-        return m
+        return RoleMetadata(owner=owner).load_data(
+                data, variable_manager=variable_manager, loader=loader)
 
     def _load_dependencies(self, attr, ds):
         '''

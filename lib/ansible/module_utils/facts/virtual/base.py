@@ -41,14 +41,11 @@ class Virtual:
 
     # FIXME: just here for existing tests cases till they are updated
     def populate(self, collected_facts=None):
-        virtual_facts = self.get_virtual_facts()
-
-        return virtual_facts
+        return self.get_virtual_facts()
 
     def get_virtual_facts(self):
-        virtual_facts = {'virtualization_type': '',
-                         'virtualization_role': ''}
-        return virtual_facts
+        return {'virtualization_type': '',
+                             'virtualization_role': ''}
 
 
 class VirtualCollector(BaseFactCollector):
@@ -65,6 +62,4 @@ class VirtualCollector(BaseFactCollector):
         # Network munges cached_facts by side effect, so give it a copy
         facts_obj = self._fact_class(module)
 
-        facts_dict = facts_obj.populate(collected_facts=collected_facts)
-
-        return facts_dict
+        return facts_obj.populate(collected_facts=collected_facts)

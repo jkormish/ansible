@@ -79,7 +79,7 @@ def create_issues(deprecated, body_tmpl, repo):
 
     for component, items in deprecated.items():
         title = items[0]['title']
-        path = '\n'.join(set((i['path']) for i in items))
+        path = '\n'.join({i['path'] for i in items})
         line = '\n'.join(i['line'] for i in items)
         body = body_tmpl % dict(component=component, path=path,
                                 line=line,

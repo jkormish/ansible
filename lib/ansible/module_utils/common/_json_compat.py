@@ -10,7 +10,10 @@ import json
 
 # Detect the python-json library which is incompatible
 try:
-    if not isinstance(json.loads, types.FunctionType) or not isinstance(json.dumps, types.FunctionType):
+    if not (
+        isinstance(json.loads, types.FunctionType)
+        and isinstance(json.dumps, types.FunctionType)
+    ):
         raise ImportError(
             'json.loads or json.dumps were not found in the imported json library.')
 except AttributeError:
