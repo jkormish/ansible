@@ -499,9 +499,7 @@ def collection_skeleton(request, tmp_path_factory):
 
     GalaxyCLI(args=galaxy_args).run()
     namespace_name, collection_name = name.split('.', 1)
-    collection_dir = os.path.join(test_dir, namespace_name, collection_name)
-
-    return collection_dir
+    return os.path.join(test_dir, namespace_name, collection_name)
 
 
 @pytest.mark.parametrize('collection_skeleton', [

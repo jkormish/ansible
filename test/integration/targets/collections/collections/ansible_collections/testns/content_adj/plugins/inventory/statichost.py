@@ -36,7 +36,9 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
     def verify_file(self, path):
         ''' Verify if file is usable by this plugin, base does minimal accessibility check '''
 
-        if not path.endswith('.statichost.yml') and not path.endswith('.statichost.yaml'):
+        if not (
+            path.endswith('.statichost.yml') or path.endswith('.statichost.yaml')
+        ):
             return False
         return super(InventoryModule, self).verify_file(path)
 

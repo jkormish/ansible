@@ -565,10 +565,10 @@ class AnsibleCloudStack:
         return self.get_tags(resource=tags, key='tag')
 
     def get_tags(self, resource=None, key='tags'):
-        existing_tags = []
-        for tag in resource.get(key) or []:
-            existing_tags.append({'key': tag['key'], 'value': tag['value']})
-        return existing_tags
+        return [
+            {'key': tag['key'], 'value': tag['value']}
+            for tag in resource.get(key) or []
+        ]
 
     def _process_tags(self, resource, resource_type, tags, operation="create"):
         if tags:
@@ -594,7 +594,7 @@ class AnsibleCloudStack:
         return [tag for tag in existing_tags if tag not in tags]
 
     def ensure_tags(self, resource, resource_type=None):
-        if not resource_type or not resource:
+        if not (resource_type and resource):
             self.fail_json(msg="Error: Missing resource or resource_type for tags.")
 
         if 'tags' in resource:
@@ -630,7 +630,7 @@ class AnsibleCloudStack:
 
     def update_result(self, resource, result=None):
         if result is None:
-            result = dict()
+            result = {}
         if resource:
             returns = self.common_returns.copy()
             returns.update(self.returns)

@@ -124,10 +124,8 @@ class Connection(ConnectionBase):
 
         display.vvv("EXEC %s" % (local_cmd), host=self.chroot)
         local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
-        p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        return p
+        return subprocess.Popen(local_cmd, shell=False, stdin=stdin,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     def exec_command(self, cmd, in_data=None, sudoable=False):
         ''' run a command on the chroot '''
@@ -160,10 +158,7 @@ class Connection(ConnectionBase):
         out_path = shlex_quote(self._prefix_login_path(out_path))
         try:
             with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
-                if not os.fstat(in_file.fileno()).st_size:
-                    count = ' count=0'
-                else:
-                    count = ''
+                count = ' count=0' if not os.fstat(in_file.fileno()).st_size else ''
                 try:
                     p = self._buffered_exec_command('dd of=%s bs=%s%s' % (out_path, BUFSIZE, count), stdin=in_file)
                 except OSError:

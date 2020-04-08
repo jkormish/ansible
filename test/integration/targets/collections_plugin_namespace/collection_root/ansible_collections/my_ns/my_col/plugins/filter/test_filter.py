@@ -8,8 +8,6 @@ def filter_name(a):
 
 class FilterModule(object):
     def filters(self):
-        filters = {
-            'filter_name': filter_name,
-        }
-
-        return filters
+        return {
+                'filter_name': filter_name,
+            }

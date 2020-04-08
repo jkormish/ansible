@@ -167,8 +167,7 @@ def update_tls_hostname(result):
 
 def _get_tls_config(fail_function, **kwargs):
     try:
-        tls_config = TLSConfig(**kwargs)
-        return tls_config
+        return TLSConfig(**kwargs)
     except TLSParameterError as exc:
         fail_function("TLS config error: %s" % exc)
 
