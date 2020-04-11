@@ -410,11 +410,3 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
             return self._parent.all_parents_static()
 
         return True
-
-    def get_first_parent_include(self):
-        from ansible.playbook.task_include import TaskInclude
-        if self._parent:
-            if isinstance(self._parent, TaskInclude):
-                return self._parent
-            return self._parent.get_first_parent_include()
-        return None

@@ -588,6 +588,13 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         self._finalized = data.get('finalized', False)
         self._squashed = data.get('squashed', False)
 
+    def get_first_parent_include(self):
+        from ansible.playbook.task_include import TaskInclude
+        if self._parent:
+            if isinstance(self._parent, TaskInclude):
+                return self._parent
+            return self._parent.get_first_parent_include()
+        return None
 
 class Base(FieldAttributeBase):
 
